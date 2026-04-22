@@ -34,6 +34,10 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+def run_stage(message)
+  Commity::Spinner.run(message) { yield }
+end
+
 def clean_output(text, type)
   lines = text.strip.lines
   idx = if type == :pr
@@ -44,18 +48,225 @@ def clean_output(text, type)
   idx ? lines[idx..].join.strip : text.strip
 end
 
-begin
-  diff = if options[:type] == :pr
-    Commity::GitReader.branch_diff(base_branch: options[:base_branch])
+def invalid_generation_reason(type:, message:, diff:)
+  if type == :commit
+    errors = Commity::InteractivePrompt.commit_message_errors(message)
+    return nil if errors.empty?
+
+    return errors.join(" ")
+  end
+
+  required_sections = [
+    "## Summary",
+    "## Motivation",
+    "## Changes Made",
+    "## Testing Notes"
+  ]
+  missing = required_sections.reject { |section| message.include?(section) }
+  return "Missing required sections: #{missing.join(', ')}" unless missing.empty?
+
+  has_files = diff.to_s.match?(/^diff --git\s+/)
+  lower = message.downcase
+  if has_files
+    bad_phrases = [
+      "no changes made",
+      "no clear issue",
+      "no specific issue",
+      "no testing notes provided"
+    ]
+    matched = bad_phrases.find { |phrase| lower.include?(phrase) }
+    return "Output incorrectly claims no concrete changes despite non-empty diff." unless matched.nil?
+  end
+
+  nil
+end
+
+def generate_with_quality_check(client:, prompt:, type:, diff:)
+  raw = run_stage("Generating #{type} with Ollama") do
+    client.generate(
+      system: prompt[:system],
+      user: prompt[:user],
+      timeout_seconds: 300,
+      open_timeout_seconds: 10
+    )
+  end
+
+  message = clean_output(raw, type)
+  reason = invalid_generation_reason(type: type, message: message, diff: diff)
+  return message if reason.nil?
+
+  puts "\nGenerated output looked weak: #{reason}"
+  puts "Retrying once with stronger constraints...\n"
+
+  retry_user = <<~MSG
+    #{prompt[:user].rstrip}
+
+    Your previous draft was invalid: #{reason}
+    Rewrite from scratch using only the provided diff content.
+    Do not claim there were no changes if files were changed.
+  MSG
+
+  retried = run_stage("Regenerating #{type} with stricter prompt") do
+    client.generate(
+      system: prompt[:system],
+      user: retry_user,
+      timeout_seconds: 300,
+      open_timeout_seconds: 10
+    )
+  end
+
+  clean_output(retried, type)
+end
+
+def print_message(message)
+  puts "\n" + ("─" * 60)
+  puts message
+  puts ("─" * 60) + "\n"
+end
+
+def maybe_stage_changes
+  status = run_stage("Reading git status") { Commity::GitWriter.status_short }
+  raise "No changes found in working tree." if status.strip.empty?
+
+  puts "\nCurrent git status:\n\n#{status}"
+
+  if Commity::InteractivePrompt.ask_yes_no("Run git add -A now?", default: :no)
+    run_stage("Staging changes (git add -A)") { Commity::GitWriter.stage_all }
+    puts "\nStaged changes with git add -A.\n"
+  end
+end
+
+def ensure_staged_changes
+  staged = run_stage("Checking staged changes") { Commity::GitWriter.staged_changes? }
+  return if staged
+
+  if Commity::InteractivePrompt.ask_yes_no("No staged changes found. Stage all changes now with git add -A?", default: :yes)
+    run_stage("Staging changes (git add -A)") { Commity::GitWriter.stage_all }
+    puts "\nStaged changes with git add -A.\n"
+  end
+
+  staged = run_stage("Checking staged changes") { Commity::GitWriter.staged_changes? }
+  raise "No staged changes. Commit flow needs staged changes." unless staged
+end
+
+def edit_message_until_valid(initial_message)
+  working = initial_message
+
+  loop do
+    edited = Commity::InteractivePrompt.edit_message(working)
+    return nil if edited.nil?
+
+    if edited == working.to_s.strip
+      puts "\nNo changes detected in editor."
+      return edited unless Commity::InteractivePrompt.ask_yes_no("Re-open editor now?", default: :yes)
+      next
+    end
+
+    errors = Commity::InteractivePrompt.commit_message_errors(edited)
+    return edited if errors.empty?
+
+    puts "\nEdited message needs fixes:"
+    errors.each { |error| puts "- #{error}" }
+    return edited unless Commity::InteractivePrompt.ask_yes_no("Re-open editor now?", default: :yes)
+
+    working = edited
+  end
+end
+
+def maybe_commit(message)
+  working_message = message
+
+  loop do
+    action = Commity::InteractivePrompt.ask_commit_action
+
+    case action
+    when :yes
+      errors = Commity::InteractivePrompt.commit_message_errors(working_message)
+      unless errors.empty?
+        puts "\nCurrent message needs fixes before commit:"
+        errors.each { |error| puts "- #{error}" }
+
+        if Commity::InteractivePrompt.ask_yes_no("Open editor to fix now?", default: :yes)
+          edited = edit_message_until_valid(working_message)
+          if edited.nil?
+            puts "\nEditor did not exit successfully. Commit skipped.\n\n"
+            return
+          end
+
+          working_message = edited
+          print_message(working_message)
+          next
+        end
+
+        puts "\nCommit skipped.\n\n"
+        return
+      end
+
+      output = run_stage("Writing commit") { Commity::GitWriter.commit_with_message_file(working_message) }
+      puts output unless output.to_s.strip.empty?
+      puts "\nCommit created.\n\n"
+      return
+    when :edit
+      edited = edit_message_until_valid(working_message)
+      if edited.nil?
+        puts "\nEditor did not exit successfully.\n\n"
+        next
+      end
+
+      working_message = edited
+      print_message(working_message)
+    else
+      puts "\nCommit skipped.\n\n"
+      return
+    end
+  end
+end
+
+def maybe_open_pr_page(description, base_branch)
+  pr_url = run_stage("Preparing prefilled GitHub PR URL") do
+    head_branch = Commity::GitWriter.current_branch
+    origin_url = Commity::GitWriter.origin_url
+    title = Commity::PrOpener.suggest_title(description, head_branch: head_branch)
+    Commity::PrOpener.compare_url(
+      origin_url: origin_url,
+      base_branch: base_branch,
+      head_branch: head_branch,
+      title: title,
+      body: description
+    )
+  end
+
+  if Commity::InteractivePrompt.ask_yes_no("Open prefilled PR page in browser now?", default: :no)
+    run_stage("Opening browser") { Commity::PrOpener.open_in_browser(pr_url) }
+    puts "\nOpened PR page:\n#{pr_url}\n\n"
   else
-    Commity::GitReader.staged_diff
+    puts "\nPR URL:\n#{pr_url}\n\n"
+  end
+end
+
+begin
+  if options[:type] == :commit
+    maybe_stage_changes
+    ensure_staged_changes
+  end
+
+  diff = if options[:type] == :pr
+    run_stage("Collecting diff against #{options[:base_branch]}...HEAD") do
+      Commity::GitReader.branch_diff(base_branch: options[:base_branch])
+    end
+  else
+    run_stage("Collecting staged diff") { Commity::GitReader.staged_diff }
   end
 
   client = Commity::OllamaClient.new
 
-  summarized_result = Commity::DiffSummarizer.summarize_if_needed(diff, client: client)
+  summarized_result = run_stage("Preparing diff for AI model") do
+    Commity::DiffSummarizer.summarize_if_needed(diff, client: client)
+  end
   if summarized_result[:summarized]
     puts "\nDiff is large — summarizing first to preserve system prompt focus...\n"
+  elsif summarized_result[:fallback_reason]
+    puts "\n#{summarized_result[:fallback_reason]}\n"
   end
 
   prompt = Commity::PromptBuilder.build(
@@ -64,20 +275,27 @@ begin
     summarized: summarized_result[:summarized]
   )
 
-  puts "\nGenerating #{options[:type]} description...\n"
-  result = client.generate(system: prompt[:system], user: prompt[:user])
-  message = clean_output(result, options[:type])
-
-  puts "\n" + ("─" * 60)
-  puts message
-  puts ("─" * 60) + "\n"
+  message = generate_with_quality_check(
+    client: client,
+    prompt: prompt,
+    type: options[:type],
+    diff: diff
+  )
+  print_message(message)
 
   unless options[:no_copy]
-    if Commity::Clipboard.copy(message)
+    copied = run_stage("Copying output to clipboard") { Commity::Clipboard.copy(message) }
+    if copied
       puts "Copied to clipboard!\n\n"
     else
       puts "Clipboard not available. Install xclip: sudo apt install xclip\n\n"
     end
+  end
+
+  if options[:type] == :commit
+    maybe_commit(message)
+  else
+    maybe_open_pr_page(message, options[:base_branch])
   end
 
 rescue RuntimeError => e
@@ -85,6 +303,9 @@ rescue RuntimeError => e
   exit 1
 rescue SocketError, Errno::ECONNREFUSED
   puts "\nError: Could not connect to Ollama. Make sure it is running on localhost:11434.\n\n"
+  exit 1
+rescue Net::OpenTimeout, Net::ReadTimeout
+  puts "\nError: Ollama request timed out while generating output. Check that the model is loaded and Ollama is responsive.\n\n"
   exit 1
 rescue => e
   puts "\nError: Something went wrong (#{e.class}).\n\n"
