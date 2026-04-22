@@ -1,0 +1,5 @@
+require_relative "services/git_reader"
+require_relative "services/ollama_client"
+require_relative "services/diff_summarizer"
+require_relative "services/prompt_builder"
+require_relative "services/clipboard"

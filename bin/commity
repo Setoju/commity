@@ -1,0 +1,92 @@
+#!/usr/bin/env ruby
+require "optparse"
+require "commity"
+
+options = {
+  type: :commit,
+  base_branch: "main",
+  no_copy: false
+}
+
+OptionParser.new do |opts|
+  opts.banner = <<~BANNER
+
+    AI Commit — Powered by Ollama (llama3.2)
+    Usage: commity [options]
+
+  BANNER
+
+  opts.on("--type TYPE", [:commit, :pr], "Message type: commit or pr (default: commit)") do |t|
+    options[:type] = t
+  end
+
+  opts.on("--base BRANCH", "Base branch for PR diff (default: main)") do |b|
+    options[:base_branch] = b
+  end
+
+  opts.on("--no-copy", "Print output only, skip clipboard copy") do
+    options[:no_copy] = true
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+def clean_output(text, type)
+  lines = text.strip.lines
+  idx = if type == :pr
+    lines.index { |l| l.strip == "## Summary" }
+  else
+    lines.index { |l| l.match?(/\A(feat|fix|chore|refactor|docs|style|test|perf|ci|build|revert)[\(!:]/i) }
+  end
+  idx ? lines[idx..].join.strip : text.strip
+end
+
+begin
+  diff = if options[:type] == :pr
+    Commity::GitReader.branch_diff(base_branch: options[:base_branch])
+  else
+    Commity::GitReader.staged_diff
+  end
+
+  client = Commity::OllamaClient.new
+
+  summarized_result = Commity::DiffSummarizer.summarize_if_needed(diff, client: client)
+  if summarized_result[:summarized]
+    puts "\nDiff is large — summarizing first to preserve system prompt focus...\n"
+  end
+
+  prompt = Commity::PromptBuilder.build(
+    type: options[:type],
+    diff: summarized_result[:content],
+    summarized: summarized_result[:summarized]
+  )
+
+  puts "\nGenerating #{options[:type]} description...\n"
+  result = client.generate(system: prompt[:system], user: prompt[:user])
+  message = clean_output(result, options[:type])
+
+  puts "\n" + ("─" * 60)
+  puts message
+  puts ("─" * 60) + "\n"
+
+  unless options[:no_copy]
+    if Commity::Clipboard.copy(message)
+      puts "Copied to clipboard!\n\n"
+    else
+      puts "Clipboard not available. Install xclip: sudo apt install xclip\n\n"
+    end
+  end
+
+rescue RuntimeError => e
+  puts "\nError: #{e.message}\n\n"
+  exit 1
+rescue SocketError, Errno::ECONNREFUSED
+  puts "\nError: Could not connect to Ollama. Make sure it is running on localhost:11434.\n\n"
+  exit 1
+rescue => e
+  puts "\nError: Something went wrong (#{e.class}).\n\n"
+  exit 1
+end
