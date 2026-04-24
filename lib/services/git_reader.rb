@@ -52,7 +52,7 @@ module Commity
             chunks << { path: current_path, lines: current_lines }
           end
 
-          match = line.match(%r{\Adiff --git a/(.+) b/(.+)\z})
+          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
           current_path = match ? match[2].strip : "unknown"
           current_lines = [line]
         else

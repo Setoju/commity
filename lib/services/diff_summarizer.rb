@@ -58,7 +58,7 @@ module Commity
             chunks << { path: current_path, diff: current_lines.join }
           end
 
-          match = line.match(%r{\Adiff --git a/(.+) b/(.+)\z})
+          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
           current_path = match ? match[2].strip : "unknown"
           current_lines = [line]
         else
@@ -115,7 +115,7 @@ module Commity
 
       diff.to_s.each_line do |line|
         if line.start_with?("diff --git ")
-          match = line.match(%r{\Adiff --git a/(.+) b/(.+)\z})
+          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
           next if match.nil?
 
           current = {
