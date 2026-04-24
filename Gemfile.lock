@@ -3,6 +3,7 @@ GEM
   specs:
     bigdecimal (4.0.1)
     csv (3.3.5)
+    diff-lcs (1.6.2)
     dotenv (3.2.0)
     httparty (0.24.2)
       csv
@@ -12,6 +13,19 @@ GEM
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
     optparse (0.8.1)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.7)
 
 PLATFORMS
   x64-mingw-ucrt
@@ -20,6 +34,7 @@ DEPENDENCIES
   dotenv
   httparty
   optparse
+  rspec (~> 3.13)
 
 BUNDLED WITH
    2.7.2
