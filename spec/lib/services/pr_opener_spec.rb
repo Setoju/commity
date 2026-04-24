@@ -22,16 +22,50 @@ RSpec.describe Commity::PrOpener do
       expect(query['body']).to eq(['Body text'])
     end
 
-    it 'raises when remote is not GitHub' do
+    it 'builds a GitLab merge request URL from SSH origin' do
+      url = described_class.compare_url(
+        origin_url: 'git@gitlab.com:acme/subgroup/commity.git',
+        base_branch: 'main',
+        head_branch: 'feat-x',
+        title: 'My MR',
+        body: 'MR body'
+      )
+
+      expect(url).to start_with('https://gitlab.com/acme/subgroup/commity/-/merge_requests/new?')
+
+      query = CGI.parse(URI.parse(url).query)
+      expect(query['merge_request[source_branch]']).to eq(['feat-x'])
+      expect(query['merge_request[target_branch]']).to eq(['main'])
+      expect(query['merge_request[title]']).to eq(['My MR'])
+      expect(query['merge_request[description]']).to eq(['MR body'])
+    end
+
+    it 'builds a GitBucket compare URL from HTTPS origin' do
+      url = described_class.compare_url(
+        origin_url: 'https://gitbucket.example.com/acme/commity.git',
+        base_branch: 'main',
+        head_branch: 'feat/with-slash',
+        title: 'My PR',
+        body: 'Body text'
+      )
+
+      expect(url).to start_with('https://gitbucket.example.com/acme/commity/compare/main...feat%2Fwith-slash?')
+
+      query = CGI.parse(URI.parse(url).query)
+      expect(query['title']).to eq(['My PR'])
+      expect(query['body']).to eq(['Body text'])
+    end
+
+    it 'raises when remote provider is unsupported' do
       expect do
         described_class.compare_url(
-          origin_url: 'git@gitlab.com:group/project.git',
+          origin_url: 'git@bitbucket.org:group/project.git',
           base_branch: 'main',
           head_branch: 'feat-x',
           title: 'PR',
           body: 'Body'
         )
-      end.to raise_error('Only GitHub remotes are supported for browser PR opening.')
+      end.to raise_error('Supported providers for browser PR opening are GitHub, GitLab, and GitBucket.')
     end
   end
 
@@ -67,6 +101,13 @@ RSpec.describe Commity::PrOpener do
                                                                                              repo: 'repo' })
       expect(described_class.extract_owner_repo('ssh://git@github.com/acme/repo.git')).to eq({ owner: 'acme',
                                                                                                repo: 'repo' })
+    end
+
+    it 'keeps nested namespaces for GitLab remotes' do
+      expect(described_class.extract_owner_repo('git@gitlab.com:acme/subgroup/repo.git')).to eq({
+        owner: 'acme/subgroup',
+        repo: 'repo'
+      })
     end
   end
 end

@@ -23,7 +23,7 @@ RSpec.describe Commity::PromptBuilder do
         raw_diff: 'diff --git a/spec/a_spec.rb b/spec/a_spec.rb'
       )
 
-      expect(prompt[:system]).to include('Your sole task is to write a GitHub Pull Request description')
+      expect(prompt[:system]).to include('Your sole task is to write a Pull Request description')
       expect(prompt[:user]).to include('Change scope overview:')
       expect(prompt[:user]).to include('- Total files changed: 1')
       expect(prompt[:user]).to include('Here is a structured summary of the git changes')

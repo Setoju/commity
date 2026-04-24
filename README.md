@@ -7,9 +7,9 @@ AI-powered commit message and pull request description generator for Git reposit
 Commity helps you:
 
 - Generate conventional commit messages from staged changes.
-- Generate structured GitHub PR descriptions from branch diffs.
+- Generate structured pull request descriptions from branch diffs.
 - Review and optionally edit generated commit messages before writing to Git history.
-- Open a prefilled GitHub compare/PR page in your browser (no GitHub API token required).
+- Open a prefilled PR/MR page in your browser for GitHub, GitLab, or GitBucket (no provider API token required).
 - Preserve semantic diff quality on large changes using file-aware clipping that keeps file headers and hunk markers.
 
 ## Requirements
@@ -79,9 +79,11 @@ Commit edit mode uses:
    - `## Changes Made`
    - `## Testing Notes`
 3. Builds GitHub compare URL with prefilled title/body using query params.
+  - GitHub/GitBucket: compare URL
+  - GitLab: new merge request URL
 4. Asks before opening browser.
 
-The tool opens a browser URL only. It does not call GitHub APIs.
+The tool opens a browser URL only. It does not call provider APIs.
 
 ### Diff Context Protocol
 
@@ -148,8 +150,8 @@ Core services:
   - Shared `TTY::Reader` input handling
   - Editor loop and commit message validation
 - `lib/services/pr_opener.rb`
-  - Parses GitHub remotes
-  - Builds compare URL with encoded title/body
+  - Parses GitHub/GitLab/GitBucket remotes
+  - Builds provider-specific PR/MR URL with encoded title/body
   - Opens browser cross-platform
 - `lib/services/clipboard.rb`
   - Cross-platform clipboard support

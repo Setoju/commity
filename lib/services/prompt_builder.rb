@@ -27,7 +27,7 @@ module Commity
     PROMPT
 
     PR_SYSTEM = <<~PROMPT
-      Your sole task is to write a GitHub Pull Request description.
+      Your sole task is to write a Pull Request description.
 
       STRICT RULES — follow every one:
       1. Your ENTIRE response is only the PR description.

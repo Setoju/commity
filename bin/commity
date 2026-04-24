@@ -278,7 +278,7 @@ def maybe_commit(message)
 end
 
 def maybe_open_pr_page(description, base_branch)
-  pr_url = run_stage('Preparing prefilled GitHub PR URL') do
+  pr_url = run_stage('Preparing prefilled PR URL') do
     head_branch = Commity::GitWriter.current_branch
     origin_url = Commity::GitWriter.origin_url
     title = Commity::PrOpener.suggest_title(description, head_branch: head_branch)
