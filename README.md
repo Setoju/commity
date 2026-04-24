@@ -42,6 +42,7 @@ commity [options]
 - `--type TYPE` where `TYPE` is `commit` or `pr` (default: `commit`)
 - `--base BRANCH` base branch for PR diff (default: `main`)
 - `--no-copy` print output only, skip clipboard copy
+- `--candidates N` generate `N` output candidates (`1`-`5`, default: `1`)
 - `-h`, `--help` show help
 
 ## Commit Flow (`--type commit`)
@@ -49,12 +50,13 @@ commity [options]
 1. Shows `git status --short`.
 2. Asks for confirmation before staging (`git add -A`).
 3. Ensures there are staged changes.
-4. Reads staged diff and generates a commit message.
-5. Shows message and asks: `Commit with this message? [y/e/N]`
+4. Reads staged diff and generates commit message candidate(s).
+5. If `--candidates` is greater than `1`, shows numbered candidates and asks you to select one.
+6. Shows selected message and asks: `Commit with this message? [y/e/N]`
    - `y`: commit now
    - `e`: open editor, then validate and re-confirm
    - `N`: skip commit
-6. Writes commit with `git commit --file <tempfile>`.
+7. Writes commit with `git commit --file <tempfile>`.
 
 ### Why `--file` instead of `-m`
 
@@ -99,6 +101,12 @@ Generate commit message and commit interactively:
 bundle exec ruby -Ilib bin/commity --type commit
 ```
 
+Generate multiple commit message candidates and pick one:
+
+```bash
+bundle exec ruby -Ilib bin/commity --type commit --candidates 3
+```
+
 Generate PR description against `develop`:
 
 ```bash
@@ -136,6 +144,8 @@ Core services:
   - Condenses large diffs before final prompt generation
 - `lib/services/interactive_prompt.rb`
   - Confirmation prompts (`y/e/N`)
+  - Candidate selection prompt for multi-candidate generation
+  - Shared `TTY::Reader` input handling
   - Editor loop and commit message validation
 - `lib/services/pr_opener.rb`
   - Parses GitHub remotes

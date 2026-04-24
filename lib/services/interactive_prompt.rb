@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require 'io/console'
 require 'shellwords'
 require 'tempfile'
+require 'tty-reader'
 
 module Commity
   module InteractivePrompt
@@ -9,8 +11,7 @@ module Commity
 
     def self.ask_yes_no(question, default: :no)
       suffix = default == :yes ? '[Y/n]' : '[y/N]'
-      print "#{question} #{suffix} "
-      input = $stdin.gets
+      input = read_input("#{question} #{suffix} ")
       return default == :yes if input.nil?
 
       value = input.strip.downcase
@@ -22,8 +23,7 @@ module Commity
     end
 
     def self.ask_commit_action
-      print 'Commit with this message? [y/e/N] '
-      input = $stdin.gets
+      input = read_input('Commit with this message? [y/e/N] ')
       return :no if input.nil?
 
       value = input.strip.downcase
@@ -31,6 +31,21 @@ module Commity
       return :edit if %w[e edit].include?(value)
 
       :no
+    end
+
+    def self.ask_candidate_selection(count, default: 1)
+      return 0 if count <= 1
+
+      loop do
+        input = read_input("Select candidate [1-#{count}] (default: #{default}): ")
+        return default - 1 if input.nil?
+
+        value = input.strip
+        return default - 1 if value.empty?
+        return value.to_i - 1 if value.match?(/\A\d+\z/) && value.to_i.between?(1, count)
+
+        puts "Please type a number between 1 and #{count}."
+      end
     end
 
     def self.edit_message(initial_message)
@@ -89,6 +104,27 @@ module Commity
 
     def self.windows?
       RUBY_PLATFORM.include?('mingw') || RUBY_PLATFORM.include?('mswin')
+    end
+
+    def self.read_input(prompt)
+      if io_console_available?
+        reader.read_line(prompt)
+      else
+        print prompt
+        $stdin.gets
+      end
+    rescue Interrupt
+      nil
+    end
+
+    def self.reader
+      @reader ||= TTY::Reader.new
+    end
+
+    def self.io_console_available?
+      !IO.console.nil?
+    rescue StandardError
+      false
     end
   end
 end

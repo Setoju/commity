@@ -53,9 +53,16 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
+    tty-cursor (0.7.1)
+    tty-reader (0.9.0)
+      tty-cursor (~> 0.7)
+      tty-screen (~> 0.8)
+      wisper (~> 2.0)
+    tty-screen (0.8.2)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
+    wisper (2.0.1)
 
 PLATFORMS
   x64-mingw-ucrt
@@ -67,6 +74,7 @@ DEPENDENCIES
   optparse
   rspec (~> 3.13)
   rubocop
+  tty-reader
 
 BUNDLED WITH
    2.7.2

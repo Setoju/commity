@@ -8,7 +8,8 @@ require 'commity'
 options = {
   type: :commit,
   base_branch: 'main',
-  no_copy: false
+  no_copy: false,
+  candidates: 1
 }
 
 OptionParser.new do |opts|
@@ -29,6 +30,12 @@ OptionParser.new do |opts|
 
   opts.on('--no-copy', 'Print output only, skip clipboard copy') do
     options[:no_copy] = true
+  end
+
+  opts.on('--candidates N', Integer, 'Number of output candidates to generate (1-5, default: 1)') do |n|
+    raise OptionParser::InvalidArgument, 'candidates must be between 1 and 5' unless n.between?(1, 5)
+
+    options[:candidates] = n
   end
 
   opts.on('-h', '--help', 'Show this help') do
@@ -149,6 +156,25 @@ def print_message(message)
   puts "\n#{'─' * 60}"
   puts message
   puts "#{'─' * 60}\n"
+end
+
+def print_candidates(candidates)
+  candidates.each_with_index do |candidate, idx|
+    puts "\nCandidate #{idx + 1}:"
+    print_message(candidate)
+  end
+end
+
+def generate_candidates(client:, prompt:, type:, diff:, count:)
+  (1..count).map do |idx|
+    puts "\nGenerating candidate #{idx}/#{count}..."
+    generate_with_quality_check(
+      client: client,
+      prompt: prompt,
+      type: type,
+      diff: diff
+    )
+  end
 end
 
 def maybe_stage_changes
@@ -305,13 +331,24 @@ begin
     raw_diff: diff
   )
 
-  message = generate_with_quality_check(
+  candidates = generate_candidates(
     client: client,
     prompt: prompt,
     type: options[:type],
-    diff: diff
+    diff: diff,
+    count: options[:candidates]
   )
-  print_message(message)
+  message = if candidates.length == 1
+              print_message(candidates.first)
+              candidates.first
+            else
+              print_candidates(candidates)
+              selected_idx = Commity::InteractivePrompt.ask_candidate_selection(candidates.length)
+              selected_message = candidates[selected_idx]
+              puts "\nUsing candidate #{selected_idx + 1}."
+              print_message(selected_message)
+              selected_message
+            end
 
   unless options[:no_copy]
     copied = run_stage('Copying output to clipboard') { Commity::Clipboard.copy(message) }

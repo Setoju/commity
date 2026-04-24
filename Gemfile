@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 gem 'dotenv'
 gem 'httparty'
 gem 'optparse'
+gem 'tty-reader'
 
 group :development, :test do
   gem 'rspec', '~> 3.13'
