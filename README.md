@@ -143,6 +143,7 @@ The CLI reports user-friendly errors for common cases such as:
 - No changes/staged changes
 - Invalid or missing Git data
 - Ollama connection failures
+- Summarization timeouts on large diffs (automatically falls back to a deterministic summary and continues)
 - Browser open failures
 
 ## Notes

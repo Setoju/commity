@@ -60,7 +60,6 @@ def invalid_generation_reason(type:, message:, diff:)
     "## Summary",
     "## Motivation",
     "## Changes Made",
-    "## Testing Notes"
   ]
   missing = required_sections.reject { |section| message.include?(section) }
   return "Missing required sections: #{missing.join(', ')}" unless missing.empty?
@@ -263,10 +262,10 @@ begin
   summarized_result = run_stage("Preparing diff for AI model") do
     Commity::DiffSummarizer.summarize_if_needed(diff, client: client)
   end
-  if summarized_result[:summarized]
-    puts "\nDiff is large — summarizing first to preserve system prompt focus...\n"
-  elsif summarized_result[:fallback_reason]
+  if summarized_result[:fallback_reason]
     puts "\n#{summarized_result[:fallback_reason]}\n"
+  elsif summarized_result[:summarized]
+    puts "\nDiff is large — summarizing first to preserve system prompt focus...\n"
   end
 
   prompt = Commity::PromptBuilder.build(

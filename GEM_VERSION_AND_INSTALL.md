@@ -47,7 +47,7 @@ commity-0.1.1.gem
 Install the newly built gem:
 
 ```bash
-gem install ./commity-0.1.1.gem
+gem install ./commity-1.0.7.gem
 ```
 
 Then verify:
