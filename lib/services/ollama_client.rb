@@ -6,7 +6,7 @@ module Commity
     include HTTParty
     base_uri "http://localhost:11434"
 
-    def generate(system:, user:, model: "llama3.2", timeout_seconds: 180, open_timeout_seconds: 10)
+    def generate(system:, user:, model: ENV["OLLAMA_MODEL"], temperature: ENV["MODEL_TEMPERATURE"], timeout_seconds: ENV["MODEL_TIMEOUT_SECONDS"], open_timeout_seconds: ENV["MODEL_OPEN_TIMEOUT_SECONDS"])
       response = self.class.post(
         "/api/chat",
         headers: { "Content-Type" => "application/json" },
@@ -16,7 +16,7 @@ module Commity
           model: model,
           stream: false,
           options: {
-            temperature: 0.2
+            temperature: temperature
           },
           messages: [
             { role: "system", content: system },

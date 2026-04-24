@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name = "commity"
-  spec.version = "1.0.6"
+  spec.version = "1.0.7"
   spec.authors = ["Setoju"]
   spec.summary = "AI-powered commit and PR description generator using Ollama"
   spec.description = "Generates git commit messages and PR descriptions using local LLM via Ollama"
@@ -13,5 +13,5 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0"
 
   spec.add_dependency "httparty", "~> 0.21"
-  spec.add_dependency "tty-markdown", "~> 0.7"
+  spec.add_dependency "dotenv-rails", "~> 3.2"
 end
