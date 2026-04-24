@@ -10,6 +10,7 @@ Commity helps you:
 - Generate structured GitHub PR descriptions from branch diffs.
 - Review and optionally edit generated commit messages before writing to Git history.
 - Open a prefilled GitHub compare/PR page in your browser (no GitHub API token required).
+- Preserve semantic diff quality on large changes using file-aware clipping that keeps file headers and hunk markers.
 
 ## Requirements
 
@@ -80,6 +81,16 @@ Commit edit mode uses:
 
 The tool opens a browser URL only. It does not call GitHub APIs.
 
+### Diff Context Protocol
+
+When a diff exceeds internal size limits, Commity clips diff context using file-aware rules instead of raw byte slicing:
+
+- Keeps full `diff --git` file headers where possible.
+- Preserves `@@ ... @@` hunk headers before clipping hunk bodies.
+- Includes as many complete files/hunks as fit in the limit, then appends a clipping notice.
+
+This improves semantic quality for AI generation compared with naive truncation.
+
 ## Examples
 
 Generate commit message and commit interactively:
@@ -110,6 +121,7 @@ Core services:
 
 - `lib/services/git_reader.rb`
   - Reads staged diff and branch diff
+  - Applies file-aware clipping to preserve headers and hunks on large diffs
   - Provides recent commits helper
 - `lib/services/git_writer.rb`
   - Reads status/staged state
