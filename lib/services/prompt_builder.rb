@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Commity
   module PromptBuilder
     COMMIT_SYSTEM = <<~PROMPT
@@ -66,29 +68,29 @@ module Commity
       scope_overview = build_scope_overview(raw_diff || diff)
 
       diff_section = if summarized
-        <<~SECTION
-          Here is a structured summary of the git changes (the raw diff was large and has been pre-condensed):
+                       <<~SECTION
+                         Here is a structured summary of the git changes (the raw diff was large and has been pre-condensed):
 
-          #{diff}
-        SECTION
-      else
-        <<~SECTION
-          Here is the git diff:
-          ```diff
-          #{diff}
-          ```
-        SECTION
-      end
+                         #{diff}
+                       SECTION
+                     else
+                       <<~SECTION
+                         Here is the git diff:
+                         ```diff
+                         #{diff}
+                         ```
+                       SECTION
+                     end
 
       overview_section = if scope_overview.empty?
-        ""
-      else
-        <<~SECTION
-          Change scope overview:
-          #{scope_overview}
+                           ''
+                         else
+                           <<~SECTION
+                             Change scope overview:
+                             #{scope_overview}
 
-        SECTION
-      end
+                           SECTION
+                         end
 
       if type == :pr
         user_content = <<~MSG
@@ -107,10 +109,10 @@ module Commity
 
     def self.build_scope_overview(diff)
       files = diff.to_s.scan(%r{^diff --git a/(.+?) b/(.+?)$}).map { |match| match[1] }.uniq
-      return "" if files.empty?
+      return '' if files.empty?
 
       sample = files.first(10).map { |path| "- #{path}" }.join("\n")
-      remainder = files.length > 10 ? "\n- ...and #{files.length - 10} more file(s)" : ""
+      remainder = files.length > 10 ? "\n- ...and #{files.length - 10} more file(s)" : ''
       "- Total files changed: #{files.length}\n- Changed files:\n#{sample}#{remainder}"
     end
   end

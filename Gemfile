@@ -1,9 +1,12 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
 
-gem "httparty"
-gem "optparse"
-gem "dotenv"
+source 'https://rubygems.org'
+
+gem 'dotenv'
+gem 'httparty'
+gem 'optparse'
 
 group :development, :test do
-	gem "rspec", "~> 3.13"
+  gem 'rspec', '~> 3.13'
+  gem 'rubocop', require: false
 end

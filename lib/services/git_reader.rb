@@ -1,4 +1,6 @@
-require "open3"
+# frozen_string_literal: true
+
+require 'open3'
 
 module Commity
   module GitReader
@@ -6,16 +8,17 @@ module Commity
     TRUNCATION_NOTICE = "\n# ... diff clipped by Commity to preserve context under size limit\n"
 
     def self.staged_diff
-      diff, status = Open3.capture2("git", "diff", "--cached")
-      raise "Failed to read staged diff." unless status.success?
-      raise "No staged changes. Run `git add` first." if diff.strip.empty?
+      diff, status = Open3.capture2('git', 'diff', '--cached')
+      raise 'Failed to read staged diff.' unless status.success?
+      raise 'No staged changes. Run `git add` first.' if diff.strip.empty?
 
       clip_diff_context(diff, max_bytes: MAX_DIFF_BYTES)
     end
 
-    def self.branch_diff(base_branch: "main")
-      raise "Invalid branch name." unless base_branch.match?(/\A[a-zA-Z0-9_\-.\/]+\z/)
-      diff, status = Open3.capture2("git", "diff", "#{base_branch}...HEAD")
+    def self.branch_diff(base_branch: 'main')
+      raise 'Invalid branch name.' unless base_branch.match?(%r{\A[a-zA-Z0-9_\-./]+\z})
+
+      diff, status = Open3.capture2('git', 'diff', "#{base_branch}...HEAD")
       raise "Failed to read branch diff against '#{base_branch}'." unless status.success?
       raise "No diff found against '#{base_branch}'." if diff.strip.empty?
 
@@ -23,7 +26,7 @@ module Commity
     end
 
     def self.recent_commits(count: 10)
-      out, = Open3.capture2("git", "log", "--oneline", "-#{count}")
+      out, = Open3.capture2('git', 'log', '--oneline', "-#{count}")
       out
     end
 
@@ -47,13 +50,11 @@ module Commity
       current_lines = []
 
       diff.to_s.each_line do |line|
-        if line.start_with?("diff --git ")
-          if current_path
-            chunks << { path: current_path, lines: current_lines }
-          end
+        if line.start_with?('diff --git ')
+          chunks << { path: current_path, lines: current_lines } if current_path
 
           match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
-          current_path = match ? match[2].strip : "unknown"
+          current_path = match ? match[2].strip : 'unknown'
           current_lines = [line]
         else
           current_lines << line
@@ -65,7 +66,7 @@ module Commity
     end
 
     def self.clip_chunks(chunks, max_bytes:)
-      output = +""
+      output = +''
 
       chunks.each do |chunk|
         remaining = max_bytes - output.bytesize
@@ -90,7 +91,7 @@ module Commity
     end
 
     def self.clip_single_chunk(lines, max_bytes:)
-      output = +""
+      output = +''
       return output if max_bytes <= 0
 
       header_lines = []
@@ -99,7 +100,7 @@ module Commity
       in_hunks = false
 
       lines.each do |line|
-        if line.start_with?("@@")
+        if line.start_with?('@@')
           in_hunks = true
           current_hunk = [line]
           hunks << current_hunk
@@ -147,9 +148,7 @@ module Commity
       safe_clipped = clipped_diff.to_s
       return safe_clipped if safe_clipped.bytesize >= max_bytes && max_bytes <= TRUNCATION_NOTICE.bytesize
 
-      if safe_clipped.bytesize + TRUNCATION_NOTICE.bytesize <= max_bytes
-        return safe_clipped + TRUNCATION_NOTICE
-      end
+      return safe_clipped + TRUNCATION_NOTICE if safe_clipped.bytesize + TRUNCATION_NOTICE.bytesize <= max_bytes
 
       available = max_bytes - TRUNCATION_NOTICE.bytesize
       return safe_clipped.byteslice(0, max_bytes) if available <= 0

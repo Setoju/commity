@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Commity
   module DiffSummarizer
     THRESHOLD = 8_000
@@ -28,7 +30,7 @@ module Commity
 
     # Returns:
     # { content: String, summarized: Boolean, fallback_reason: String|nil }
-    def self.summarize_if_needed(diff, client:, model: "llama3.2")
+    def self.summarize_if_needed(diff, client:, model: 'llama3.2')
       return { content: diff, summarized: false, fallback_reason: nil } if diff.bytesize <= THRESHOLD
 
       chunks = split_by_file(diff)
@@ -53,13 +55,11 @@ module Commity
       current_lines = []
 
       diff.to_s.each_line do |line|
-        if line.start_with?("diff --git ")
-          if current_path
-            chunks << { path: current_path, diff: current_lines.join }
-          end
+        if line.start_with?('diff --git ')
+          chunks << { path: current_path, diff: current_lines.join } if current_path
 
           match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
-          current_path = match ? match[2].strip : "unknown"
+          current_path = match ? match[2].strip : 'unknown'
           current_lines = [line]
         else
           current_lines << line
@@ -103,9 +103,9 @@ module Commity
     end
 
     def self.mechanical_summary(diff)
-      additions = diff.to_s.each_line.count { |l| l.start_with?("+") && !l.start_with?("+++") }
-      deletions = diff.to_s.each_line.count { |l| l.start_with?("-") && !l.start_with?("---") }
-      hunks = diff.to_s.each_line.count { |l| l.start_with?("@@") }
+      additions = diff.to_s.each_line.count { |l| l.start_with?('+') && !l.start_with?('+++') }
+      deletions = diff.to_s.each_line.count { |l| l.start_with?('-') && !l.start_with?('---') }
+      hunks = diff.to_s.each_line.count { |l| l.start_with?('@@') }
       "- #{additions} additions, #{deletions} deletions across #{hunks} hunk(s)"
     end
 
@@ -114,7 +114,7 @@ module Commity
       current = nil
 
       diff.to_s.each_line do |line|
-        if line.start_with?("diff --git ")
+        if line.start_with?('diff --git ')
           match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
           next if match.nil?
 
@@ -122,7 +122,7 @@ module Commity
             path: match[2].strip,
             additions: 0,
             deletions: 0,
-            status: "modified"
+            status: 'modified'
           }
           files << current
           next
@@ -131,33 +131,32 @@ module Commity
         next if current.nil?
 
         stripped = line.strip
-        current[:status] = "added" if stripped == "new file mode"
-        current[:status] = "deleted" if stripped == "deleted file mode"
-        current[:status] = "renamed" if stripped.start_with?("rename from ") || stripped.start_with?("rename to ")
+        current[:status] = 'added' if stripped == 'new file mode'
+        current[:status] = 'deleted' if stripped == 'deleted file mode'
+        current[:status] = 'renamed' if stripped.start_with?('rename from ') || stripped.start_with?('rename to ')
 
-        next if line.start_with?("+++", "---", "@@")
-        current[:additions] += 1 if line.start_with?("+")
-        current[:deletions] += 1 if line.start_with?("-")
+        next if line.start_with?('+++', '---', '@@')
+
+        current[:additions] += 1 if line.start_with?('+')
+        current[:deletions] += 1 if line.start_with?('-')
       end
 
       return diff.to_s[0, FALLBACK_BYTES] if files.empty?
 
       lines = []
-      lines << "### Diff Overview"
+      lines << '### Diff Overview'
       lines << "- Total files changed: #{files.length}"
-      lines << ""
+      lines << ''
 
       files.first(MAX_FILES_IN_SUMMARY).each do |file|
         lines << "### #{file[:path]}"
         lines << "- Status: #{file[:status]}"
         lines << "- Added lines: #{file[:additions]}"
         lines << "- Removed lines: #{file[:deletions]}"
-        lines << ""
+        lines << ''
       end
 
-      if files.length > MAX_FILES_IN_SUMMARY
-        lines << "...and #{files.length - MAX_FILES_IN_SUMMARY} more files"
-      end
+      lines << "...and #{files.length - MAX_FILES_IN_SUMMARY} more files" if files.length > MAX_FILES_IN_SUMMARY
 
       lines.join("\n").strip
     end

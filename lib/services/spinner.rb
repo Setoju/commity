@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Commity
   module Spinner
-    FRAMES = ["|", "/", "-", "\\"].freeze
+    FRAMES = ['|', '/', '-', '\\'].freeze
     INTERVAL_SECONDS = 0.1
 
     def self.run(message)
@@ -34,7 +36,7 @@ module Commity
         done = true
         spinner_thread.join
 
-        status = error.nil? ? "[done]" : "[fail]"
+        status = error.nil? ? '[done]' : '[fail]'
         print "\r#{status} #{message}\n"
         $stdout.flush
       end
