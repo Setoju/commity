@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.executables = ['commity']
   spec.require_paths = ['lib']
 
-  spec.required_ruby_version = '>= 3.0'
+  spec.required_ruby_version = '>= 3.2'
 
   spec.add_dependency 'dotenv', '~> 3.2'
   spec.add_dependency 'httparty', '~> 0.21'
