@@ -334,7 +334,8 @@ rescue SocketError, Errno::ECONNREFUSED
   puts "\nError: Could not connect to Ollama. Make sure it is running on localhost:11434.\n\n"
   exit 1
 rescue Net::OpenTimeout, Net::ReadTimeout
-  puts "\nError: Ollama request timed out while generating output. Check that the model is loaded and Ollama is responsive.\n\n"
+  puts "\nError: Ollama request timed out while generating output. " \
+       "Check that the model is loaded and Ollama is responsive.\n\n"
   exit 1
 rescue StandardError => e
   puts "\nError: Something went wrong (#{e.class}).\n\n"

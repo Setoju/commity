@@ -13,8 +13,8 @@ module Commity
     DEFAULT_TIMEOUT_SECONDS = 180
     DEFAULT_OPEN_TIMEOUT_SECONDS = 10
 
-    def generate(system:, user:, model: ENV['OLLAMA_MODEL'], temperature: ENV['MODEL_TEMPERATURE'],
-                 timeout_seconds: ENV['MODEL_TIMEOUT_SECONDS'], open_timeout_seconds: ENV['MODEL_OPEN_TIMEOUT_SECONDS'])
+    def generate(system:, user:, model: ENV.fetch('OLLAMA_MODEL', DEFAULT_MODEL), temperature: ENV.fetch('MODEL_TEMPERATURE', DEFAULT_TEMPERATURE),
+                 timeout_seconds: ENV.fetch('MODEL_TIMEOUT_SECONDS', DEFAULT_TIMEOUT_SECONDS), open_timeout_seconds: ENV.fetch('MODEL_OPEN_TIMEOUT_SECONDS', DEFAULT_OPEN_TIMEOUT_SECONDS))
       selected_model = normalize_model(model)
       selected_temperature = normalize_float(temperature, DEFAULT_TEMPERATURE)
       selected_timeout_seconds = normalize_integer(timeout_seconds, DEFAULT_TIMEOUT_SECONDS)

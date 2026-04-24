@@ -3,11 +3,13 @@
 require 'spec_helper'
 
 RSpec.describe 'Diff pipeline', :integration do
-  class FakeSummaryClient
-    def generate(system:, user:, **_kwargs)
-      return '- summarize file changes' if system.include?('provided diff chunk')
+  let(:fake_summary_client_class) do
+    Class.new do
+      def generate(system:, user:, **_kwargs)
+        return '- summarize file changes' if system.include?('provided diff chunk')
 
-      user
+        user
+      end
     end
   end
 
@@ -23,7 +25,7 @@ RSpec.describe 'Diff pipeline', :integration do
     DIFF
 
     clipped = Commity::GitReader.clip_diff_context(diff, max_bytes: Commity::GitReader::MAX_DIFF_BYTES)
-    result = Commity::DiffSummarizer.summarize_if_needed(clipped, client: FakeSummaryClient.new)
+    result = Commity::DiffSummarizer.summarize_if_needed(clipped, client: fake_summary_client_class.new)
 
     expect(clipped).to include('diff --git a/app/models/user.rb b/app/models/user.rb')
     expect(clipped).to include('@@ -1 +1,10000 @@')
