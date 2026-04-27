@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = 'commity'
-  spec.version = '1.2.0'
+  spec.version = '1.2.1'
   spec.authors = ['Setoju']
   spec.summary = 'AI-powered commit and PR description generator using Ollama'
   spec.description = 'Generates git commit messages and PR descriptions using local LLM via Ollama'
