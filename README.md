@@ -14,7 +14,7 @@ Commity helps you:
 
 ## Requirements
 
-- Ruby 3.0+
+- Ruby 3.2+
 - Git
 - Ollama running locally at `http://localhost:11434`
 - A Git repository as your working directory
@@ -58,6 +58,11 @@ commity [options]
    - `N`: skip commit
 7. Writes commit with `git commit --file <tempfile>`.
 
+### Commit Message Validation
+
+- First line must use a conventional commit prefix (e.g. `feat:`, `fix:`).
+- First line must be 100 characters or fewer.
+
 ### Why `--file` instead of `-m`
 
 Multi-line messages and special characters are safer with `git commit --file`, avoiding shell quoting edge cases.
@@ -87,11 +92,13 @@ The tool opens a browser URL only. It does not call provider APIs.
 
 ### Diff Context Protocol
 
-When a diff exceeds internal size limits, Commity clips diff context using file-aware rules instead of raw byte slicing:
+When a diff exceeds internal size limits, Commity clips and summarizes using file-aware rules:
 
 - Keeps full `diff --git` file headers where possible.
 - Preserves `@@ ... @@` hunk headers before clipping hunk bodies.
 - Includes as many complete files/hunks as fit in the limit, then appends a clipping notice.
+- Summarizes large chunks asynchronously and in batches to reduce total LLM round trips.
+- Falls back to deterministic file-level summaries if model summarization times out.
 
 This improves semantic quality for AI generation compared with naive truncation.
 
@@ -123,9 +130,12 @@ bundle exec ruby -Ilib bin/commity --type pr --no-copy
 
 ## Implementation Overview
 
-Main entrypoint:
+Main entrypoint and flow orchestration:
 
-- `bin/commity`: CLI parsing and high-level control flow
+- `bin/commity`: CLI parsing and flow dispatch
+- `lib/flows/base_flow.rb`: shared generation pipeline and quality checks
+- `lib/flows/commit_flow.rb`: commit-specific staging/edit/commit interactions
+- `lib/flows/pr_flow.rb`: PR-specific URL generation/open flow
 
 Core services:
 
@@ -140,10 +150,16 @@ Core services:
   - Reads branch and origin remote
 - `lib/services/ollama_client.rb`
   - Sends chat requests to Ollama
+- `lib/services/diff_parser.rb`
+  - Parses diff blocks and derives change metadata
 - `lib/services/prompt_builder.rb`
   - Builds strict system/user prompts for commit and PR modes
-- `lib/services/diff_summarizer.rb`
-  - Condenses large diffs before final prompt generation
+- `lib/services/diff_summarization/diff_summarizer.rb`
+  - Orchestrates large-diff summarization and summary combine
+- `lib/services/diff_summarization/batch_runner.rb`
+  - Runs asynchronous, batched per-file summarization jobs
+- `lib/services/diff_summarization/fallback_builder.rb`
+  - Builds deterministic summaries when model summarization fails or times out
 - `lib/services/interactive_prompt.rb`
   - Confirmation prompts (`y/e/N`)
   - Candidate selection prompt for multi-candidate generation
@@ -174,3 +190,4 @@ The CLI reports user-friendly errors for common cases such as:
 
 - The model default is currently `llama3.2` in `OllamaClient`.
 - PR browser URL body payloads are URL-encoded with `URI.encode_www_form`.
+- You can tune summarization worker concurrency with `DIFF_SUMMARY_WORKERS`.
