@@ -7,6 +7,7 @@ require 'tty-reader'
 
 module Commity
   module InteractivePrompt
+    COMMIT_SUBJECT_MAX_LENGTH = 100
     COMMIT_PREFIX = /\A(feat|fix|chore|refactor|docs|style|test|perf|ci|build|revert)(\([^)]+\))?!?:\s+\S/i
 
     def self.ask_yes_no(question, default: :no)
@@ -77,7 +78,9 @@ module Commity
       unless first_line.match?(COMMIT_PREFIX)
         errors << 'First line must start with a conventional commit type (feat:, fix:, etc.).'
       end
-      errors << 'First line should be 72 characters or fewer.' if first_line.length > 72
+      if first_line.length > COMMIT_SUBJECT_MAX_LENGTH
+        errors << "First line should be #{COMMIT_SUBJECT_MAX_LENGTH} characters or fewer."
+      end
       errors
     end
 
