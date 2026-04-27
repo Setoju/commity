@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'open3'
+require_relative 'diff_parser'
 
 module Commity
   module GitReader
@@ -45,24 +46,7 @@ module Commity
 
     # Returns [{ path: String, lines: Array<String> }]
     def self.split_by_file(diff)
-      chunks = []
-      current_path = nil
-      current_lines = []
-
-      diff.to_s.each_line do |line|
-        if line.start_with?('diff --git ')
-          chunks << { path: current_path, lines: current_lines } if current_path
-
-          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
-          current_path = match ? match[2].strip : 'unknown'
-          current_lines = [line]
-        else
-          current_lines << line
-        end
-      end
-
-      chunks << { path: current_path, lines: current_lines } if current_path
-      chunks
+      Commity::DiffParser.split_by_file_lines(diff)
     end
 
     def self.clip_chunks(chunks, max_bytes:)

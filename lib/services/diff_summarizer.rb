@@ -2,6 +2,8 @@
 
 module Commity
   module DiffSummarizer
+    require_relative 'diff_parser'
+
     THRESHOLD = 8_000
     CHUNK_THRESHOLD = 3_000
     COMBINE_THRESHOLD = 6_000
@@ -30,19 +32,20 @@ module Commity
 
     # Returns:
     # { content: String, summarized: Boolean, fallback_reason: String|nil }
-    def self.summarize_if_needed(diff, client:, model: 'llama3.2')
+    def self.summarize_if_needed(diff, client:, model: 'llama3.2', chunks: nil)
+      parsed_chunks = chunks
       return { content: diff, summarized: false, fallback_reason: nil } if diff.bytesize <= THRESHOLD
 
-      chunks = split_by_file(diff)
-      return { content: diff[0, FALLBACK_BYTES], summarized: false, fallback_reason: nil } if chunks.empty?
+      parsed_chunks ||= split_by_file(diff)
+      return { content: diff[0, FALLBACK_BYTES], summarized: false, fallback_reason: nil } if parsed_chunks.empty?
 
-      per_file_summaries = summarize_chunks(chunks, client: client, model: model)
+      per_file_summaries = summarize_chunks(parsed_chunks, client: client, model: model)
       combined = combine(per_file_summaries, client: client, model: model)
 
       { content: combined, summarized: true, fallback_reason: nil }
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       {
-        content: fallback_summary(diff),
+        content: fallback_summary(diff, chunks: parsed_chunks),
         summarized: true,
         fallback_reason: "Summarization timed out (#{e.class}). Continuing with deterministic fallback."
       }
@@ -50,24 +53,7 @@ module Commity
 
     # Returns [{ path: String, diff: String }]
     def self.split_by_file(diff)
-      chunks = []
-      current_path = nil
-      current_lines = []
-
-      diff.to_s.each_line do |line|
-        if line.start_with?('diff --git ')
-          chunks << { path: current_path, diff: current_lines.join } if current_path
-
-          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
-          current_path = match ? match[2].strip : 'unknown'
-          current_lines = [line]
-        else
-          current_lines << line
-        end
-      end
-
-      chunks << { path: current_path, diff: current_lines.join } if current_path
-      chunks
+      Commity::DiffParser.split_by_file(diff)
     end
 
     def self.summarize_chunks(chunks, client:, model:)
@@ -109,36 +95,33 @@ module Commity
       "- #{additions} additions, #{deletions} deletions across #{hunks} hunk(s)"
     end
 
-    def self.fallback_summary(diff)
+    def self.fallback_summary(diff, chunks: nil)
+      parsed_chunks = chunks || split_by_file(diff)
       files = []
-      current = nil
 
-      diff.to_s.each_line do |line|
-        if line.start_with?('diff --git ')
-          match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
-          next if match.nil?
+      parsed_chunks.each do |chunk|
+        current = {
+          path: chunk[:path].to_s,
+          additions: 0,
+          deletions: 0,
+          status: 'modified'
+        }
 
-          current = {
-            path: match[2].strip,
-            additions: 0,
-            deletions: 0,
-            status: 'modified'
-          }
-          files << current
-          next
+        chunk[:diff].to_s.each_line do |line|
+          stripped = line.strip
+          current[:status] = 'added' if stripped.start_with?('new file mode')
+          current[:status] = 'deleted' if stripped.start_with?('deleted file mode')
+          if stripped.start_with?('rename from ') || stripped.start_with?('rename to ')
+            current[:status] = 'renamed'
+          end
+
+          next if line.start_with?('diff --git ', '+++', '---', '@@')
+
+          current[:additions] += 1 if line.start_with?('+')
+          current[:deletions] += 1 if line.start_with?('-')
         end
 
-        next if current.nil?
-
-        stripped = line.strip
-        current[:status] = 'added' if stripped == 'new file mode'
-        current[:status] = 'deleted' if stripped == 'deleted file mode'
-        current[:status] = 'renamed' if stripped.start_with?('rename from ') || stripped.start_with?('rename to ')
-
-        next if line.start_with?('+++', '---', '@@')
-
-        current[:additions] += 1 if line.start_with?('+')
-        current[:deletions] += 1 if line.start_with?('-')
+        files << current
       end
 
       return diff.to_s[0, FALLBACK_BYTES] if files.empty?
