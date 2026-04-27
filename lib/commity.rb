@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'services/config_loader'
 require_relative 'services/git_reader'
 require_relative 'services/git_writer'
 require_relative 'services/ollama_client'
