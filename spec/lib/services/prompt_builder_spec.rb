@@ -8,11 +8,13 @@ RSpec.describe Commity::PromptBuilder do
       prompt = described_class.build(type: :commit, diff: 'diff --git a/a.rb b/a.rb', summarized: false)
 
       expect(prompt[:system]).to include('Your sole task is to write a Git commit message')
+      expect(prompt[:system]).to include('The first line must be 100 characters or fewer.')
       expect(prompt[:user]).to include('Change scope overview:')
       expect(prompt[:user]).to include('- Total files changed: 1')
       expect(prompt[:user]).to include('Here is the git diff:')
       expect(prompt[:user]).to include('```diff')
       expect(prompt[:user]).to include('Write the commit message now')
+      expect(prompt[:user]).to include('keep the first line within 100 characters')
     end
 
     it 'builds pr prompt with summarized section and raw-diff scope overview' do
@@ -29,6 +31,19 @@ RSpec.describe Commity::PromptBuilder do
       expect(prompt[:user]).to include('Here is a structured summary of the git changes')
       expect(prompt[:user]).to include('Write the PR description now')
       expect(prompt[:user]).not_to include('```diff')
+    end
+
+    it 'uses passed diff metadata for scope overview' do
+      prompt = described_class.build(
+        type: :commit,
+        diff: "### lib/a.rb\n- changed",
+        summarized: true,
+        diff_metadata: { files: ['lib/a.rb', 'lib/b.rb'] }
+      )
+
+      expect(prompt[:user]).to include('- Total files changed: 2')
+      expect(prompt[:user]).to include('- lib/a.rb')
+      expect(prompt[:user]).to include('- lib/b.rb')
     end
   end
 end

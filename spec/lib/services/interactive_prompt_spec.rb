@@ -14,9 +14,16 @@ RSpec.describe Commity::InteractivePrompt do
     end
 
     it 'flags long first lines' do
-      long_subject = "feat: #{'a' * 80}"
+      long_subject = "feat: #{'a' * 110}"
       errors = described_class.commit_message_errors(long_subject)
-      expect(errors).to include('First line should be 72 characters or fewer.')
+      expect(errors).to include('First line should be 100 characters or fewer.')
+    end
+
+    it 'accepts first lines up to 100 characters' do
+      max_subject_payload = 'a' * (100 - 'feat: '.length)
+      message = "feat: #{max_subject_payload}"
+
+      expect(described_class.commit_message_errors(message)).to eq([])
     end
 
     it 'accepts a valid conventional commit message' do
