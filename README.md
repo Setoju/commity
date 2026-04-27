@@ -37,6 +37,19 @@ Or after gem installation:
 commity [options]
 ```
 
+## Configuration
+
+You can configure default behavior using a `.commity.yaml` file in your project root.
+See .commity.yaml.example for a template.
+
+```yaml
+model: "llama3.2"
+ollama_url: "http://localhost:11434"
+candidates: 1
+base_branch: "main"
+no_copy: false
+```
+
 ### Options
 
 - `--type TYPE` where `TYPE` is `commit` or `pr` (default: `commit`)

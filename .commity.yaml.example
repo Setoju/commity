@@ -1,0 +1,17 @@
+# Commity configuration file example
+# Copy this to .commity.yaml in your project root to customize behavior.
+
+# The Ollama model to use for generation (default: llama3.2)
+model: "llama3.2"
+
+# The URL where Ollama is running (default: http://localhost:11434)
+ollama_url: "http://localhost:11434"
+
+# Number of message candidates to generate (1-5, default: 1)
+candidates: 1
+
+# Default base branch for PR diffs (default: main)
+base_branch: "main"
+
+# Disable copying the result to clipboard (default: false)
+no_copy: false

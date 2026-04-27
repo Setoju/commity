@@ -4,7 +4,8 @@ module Commity
   module Flows
     class BaseFlow
       def initialize(options:)
-        @options = options
+        # Merge defaults/config file with CLI options (CLI options win)
+        @options = Commity::ConfigLoader.load.merge(options || {})
       end
 
       def run
