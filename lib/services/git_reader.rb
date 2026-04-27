@@ -9,21 +9,25 @@ module Commity
     TRUNCATION_NOTICE = "\n# ... diff clipped by Commity to preserve context under size limit\n"
 
     def self.staged_diff
-      diff, status = Open3.capture2('git', 'diff', '--cached')
+      # Strip context lines using -U0 and filter out binary/lockfile noise
+      diff, status = Open3.capture2('git', 'diff', '--cached', '-U0')
       raise 'Failed to read staged diff.' unless status.success?
       raise 'No staged changes. Run `git add` first.' if diff.strip.empty?
 
-      clip_diff_context(diff, max_bytes: MAX_DIFF_BYTES)
+      filtered_diff = filter_diff_noise(diff)
+      clip_diff_context(filtered_diff, max_bytes: MAX_DIFF_BYTES)
     end
 
     def self.branch_diff(base_branch: 'main')
       raise 'Invalid branch name.' unless base_branch.match?(%r{\A[a-zA-Z0-9_\-./]+\z})
 
-      diff, status = Open3.capture2('git', 'diff', "#{base_branch}...HEAD")
+      # Strip context lines using -U0 and filter out binary/lockfile noise
+      diff, status = Open3.capture2('git', 'diff', '-U0', "#{base_branch}...HEAD")
       raise "Failed to read branch diff against '#{base_branch}'." unless status.success?
       raise "No diff found against '#{base_branch}'." if diff.strip.empty?
 
-      clip_diff_context(diff, max_bytes: MAX_DIFF_BYTES)
+      filtered_diff = filter_diff_noise(diff)
+      clip_diff_context(filtered_diff, max_bytes: MAX_DIFF_BYTES)
     end
 
     def self.recent_commits(count: 10)
@@ -43,6 +47,50 @@ module Commity
 
       append_notice(clipped, max_bytes: max_bytes)
     end
+
+    LOCKFILE_PATTERNS = [
+      %r{Gemfile\.lock},
+      %r{package-lock\.json},
+      %r{yarn\.lock},
+      %r{pnpm-lock\.yaml},
+      %r{composer\.lock},
+      %r{mix\.lock},
+      %r{Cargo\.lock},
+      %r{Pipfile\.lock}
+    ].freeze
+
+    def self.filter_diff_noise(diff)
+      filtered_lines = []
+      skip_chunk = false
+
+      diff.each_line do |line|
+        if line.start_with?('diff --git')
+          path = extract_path_from_diff_header(line)
+          is_lockfile = LOCKFILE_PATTERNS.any? { |pattern| path.match?(pattern) }
+          # git diff output for binary files often includes "Binary files ... differ"
+          is_binary_diff_header = line.include?('Binary files')
+
+          if is_lockfile || is_binary_diff_header
+            skip_chunk = true
+            next # Skip this diff header
+          else
+            skip_chunk = false
+          end
+        end
+
+        unless skip_chunk
+          filtered_lines << line
+        end
+      end
+      filtered_lines.join
+    end
+    private_class_method :filter_diff_noise
+
+    def self.extract_path_from_diff_header(line)
+      match = line.chomp.match(%r{\Adiff --git a/(.+) b/(.+)\z})
+      match ? match[2].strip : 'unknown'
+    end
+    private_class_method :extract_path_from_diff_header
 
     # Returns [{ path: String, lines: Array<String> }]
     def self.split_by_file(diff)
