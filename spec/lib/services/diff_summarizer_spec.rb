@@ -25,35 +25,18 @@ RSpec.describe Commity::DiffSummarizer do
         @@ -1 +1,2 @@
       DIFF
 
-      allow(described_class).to receive(:split_by_file).and_return([{ path: 'lib/a.rb', diff: big_diff }])
       allow(described_class).to receive(:summarize_chunks).and_raise(Net::ReadTimeout.new)
 
-      result = described_class.summarize_if_needed(big_diff, client: instance_double('client'))
+      result = described_class.summarize_if_needed(
+        big_diff,
+        client: instance_double('client'),
+        chunks: [{ path: 'lib/a.rb', diff: big_diff }]
+      )
 
       expect(result[:summarized]).to be(true)
       expect(result[:fallback_reason]).to include('Summarization timed out')
       expect(result[:content]).to include('### Diff Overview')
       expect(result[:content]).to include('### lib/a.rb')
-    end
-  end
-
-  describe '.split_by_file' do
-    it 'extracts path and content per diff block' do
-      diff = <<~DIFF
-        diff --git a/lib/a.rb b/lib/a.rb
-        @@ -1 +1 @@
-        -old
-        +new
-        diff --git a/lib/b.rb b/lib/b.rb
-        @@ -1 +1 @@
-        -x
-        +y
-      DIFF
-
-      chunks = described_class.split_by_file(diff)
-
-      expect(chunks.map { |c| c[:path] }).to eq(['lib/a.rb', 'lib/b.rb'])
-      expect(chunks.first[:diff]).to include('@@ -1 +1 @@')
     end
   end
 
@@ -67,6 +50,61 @@ RSpec.describe Commity::DiffSummarizer do
       DIFF
 
       expect(described_class.mechanical_summary(diff)).to eq('- 1 additions, 1 deletions across 1 hunk(s)')
+    end
+  end
+
+  describe '.summarize_chunks' do
+    it 'batches large chunks and preserves chunk order' do
+      large_diff = <<~DIFF + ("+x\n" * 1200)
+        diff --git a/lib/a.rb b/lib/a.rb
+        @@ -1 +1,2 @@
+      DIFF
+      larger_diff = <<~DIFF + ("+y\n" * 1200)
+        diff --git a/lib/b.rb b/lib/b.rb
+        @@ -1 +1,2 @@
+      DIFF
+      largest_diff = <<~DIFF + ("+z\n" * 1200)
+        diff --git a/lib/c.rb b/lib/c.rb
+        @@ -1 +1,2 @@
+      DIFF
+
+      chunks = [
+        { path: 'lib/a.rb', diff: large_diff },
+        { path: 'lib/b.rb', diff: larger_diff },
+        { path: 'lib/c.rb', diff: largest_diff }
+      ]
+
+      client = Class.new do
+        attr_reader :thread_ids, :call_count
+
+        def initialize
+          @thread_ids = []
+          @call_count = 0
+          @mutex = Mutex.new
+        end
+
+        def generate(user:, **_kwargs)
+          sleep 0.05
+          paths = user.scan(/^### (.+)$/).flatten
+          @mutex.synchronize do
+            @thread_ids << Thread.current.object_id
+            @call_count += 1
+          end
+          if paths.length > 1
+            paths.map { |path| "### #{path}\n- summary for #{path}" }.join("\n\n")
+          else
+            path = user[%r{diff --git a/(.+?) b/}, 1]
+            "- summary for #{path}"
+          end
+        end
+      end.new
+
+      summaries = described_class.summarize_chunks(chunks, client: client, model: 'llama3.2')
+
+      expect(summaries[0]).to include("### lib/a.rb\n- summary for lib/a.rb")
+      expect(summaries[1]).to include("### lib/b.rb\n- summary for lib/b.rb")
+      expect(summaries[2]).to include("### lib/c.rb\n- summary for lib/c.rb")
+      expect(client.call_count).to be < chunks.length
     end
   end
 end
