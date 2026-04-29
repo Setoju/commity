@@ -153,37 +153,24 @@ Main entrypoint and flow orchestration:
 Core services:
 
 - `lib/services/git_reader.rb`
-  - Reads staged diff and branch diff
-  - Applies file-aware clipping to preserve headers and hunks on large diffs
-  - Provides recent commits helper
-- `lib/services/git_writer.rb`
-  - Reads status/staged state
-  - Stages (`git add -A`)
-  - Commits with message file (`git commit --file`)
-  - Reads branch and origin remote
-- `lib/services/ollama_client.rb`
-  - Sends chat requests to Ollama
-- `lib/services/diff_parser.rb`
-  - Parses diff blocks and derives change metadata
-- `lib/services/prompt_builder.rb`
-  - Builds strict system/user prompts for commit and PR modes
-- `lib/services/diff_summarization/diff_summarizer.rb`
-  - Orchestrates large-diff summarization and summary combine
-- `lib/services/diff_summarization/batch_runner.rb`
-  - Runs asynchronous, batched per-file summarization jobs
-- `lib/services/diff_summarization/fallback_builder.rb`
-  - Builds deterministic summaries when model summarization fails or times out
-- `lib/services/interactive_prompt.rb`
-  - Confirmation prompts (`y/e/N`)
-  - Candidate selection prompt for multi-candidate generation
-  - Shared `TTY::Reader` input handling
-  - Editor loop and commit message validation
-- `lib/services/pr_opener.rb`
-  - Parses GitHub/GitLab/GitBucket remotes
-  - Builds provider-specific PR/MR URL with encoded title/body
-  - Opens browser cross-platform
-- `lib/services/clipboard.rb`
-  - Cross-platform clipboard support
+  - `lib/services/git/git_reader.rb`: Reads staged diff and branch diff, applies file-aware clipping, provides recent commits helper.
+  - `lib/services/git/git_writer.rb`: Reads status/staged state, stages (`git add -A`), commits with message file (`git commit --file`), reads branch and origin remote.
+  - `lib/services/git/diff_parser.rb`: Parses diff blocks and derives change metadata.
+  - `lib/services/git/pr/pr_opener.rb`: Parses GitHub/GitLab/GitBucket remotes, builds provider-specific PR/MR URL, opens browser cross-platform.
+- `lib/services/ollama_client.rb`: Sends chat requests to Ollama.
+- `lib/services/diff_summarization/diff_summarizer.rb`: Orchestrates large-diff summarization and summary combine.
+  - `lib/services/diff_summarization/batch_runner.rb`: Runs asynchronous, batched per-file summarization jobs.
+  - `lib/services/diff_summarization/fallback_builder.rb`: Builds deterministic summaries when model summarization fails or times out.
+- `lib/services/helpers/config_loader.rb`: Loads configuration from `.commity.yaml`.
+  - `lib/services/helpers/prompt_builder.rb`: Builds strict system/user prompts for commit and PR modes.
+  - `lib/services/helpers/interactive_prompt.rb`: Handles confirmation prompts, candidate selection, editor loop, and commit message validation.
+  - `lib/services/helpers/clipboard.rb`: Provides cross-platform clipboard support.
+  - `lib/services/helpers/spinner.rb`: Displays a spinner for long-running operations.
+- `lib/services/message_generator.rb`: Generates commit and PR messages with quality checks.
+- `lib/services/message_presenter.rb`: Presents generated messages to the user.
+- `lib/services/flow_context_builder.rb`: Builds the context for different Commity flows.
+- `lib/services/git/commit/commit_staging.rb`: Handles staging changes for a commit.
+- `lib/services/git/commit/commit_execution.rb`: Executes the git commit command.
 
 Service loading:
 
