@@ -2,7 +2,7 @@
 
 module Commity
   module DiffSummarizer
-    require_relative '../diff_parser'
+    require_relative '../git/diff_parser'
     require_relative 'batch_runner'
     require_relative 'fallback_builder'
 
