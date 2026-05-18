@@ -3,24 +3,39 @@
 require 'spec_helper'
 require 'json'
 
-RSpec.describe Commity::OllamaClient do
-  let(:client) { described_class.new }
+RSpec.describe Commity::GoogleClient do
+  let(:client) do
+    described_class.new(
+      config: {
+        google_api_key: 'test-google-api-key',
+        model: described_class::DEFAULT_MODEL,
+        temperature: described_class::DEFAULT_TEMPERATURE,
+        timeout_seconds: described_class::DEFAULT_TIMEOUT_SECONDS,
+        open_timeout_seconds: described_class::DEFAULT_OPEN_TIMEOUT_SECONDS
+      }
+    )
+  end
 
   describe '.generate' do
     it 'normalizes timeout and temperature values before POST' do
-      response = instance_double('HTTParty::Response', success?: true, body: { message: { content: 'ok' } }.to_json,
-                                                       code: 200)
+      response = instance_double(
+        'HTTParty::Response',
+        success?: true,
+        body: { candidates: [{ content: { parts: [{ text: 'ok' }] } }] }.to_json,
+        code: 200
+      )
 
       expect(described_class).to receive(:post) do |path, opts|
-        expect(path).to eq('/api/chat')
+        expect(path).to eq('/v1beta/models/gemma-4-31b-it:generateContent')
+        expect(opts[:query]).to eq({ key: 'test-google-api-key' })
         expect(opts[:timeout]).to eq(90)
         expect(opts[:open_timeout]).to eq(7)
 
         payload = JSON.parse(opts[:body])
-        expect(payload['model']).to eq('llama3.2')
-        expect(payload.dig('options', 'temperature')).to eq(0.3)
-        expect(payload.dig('messages', 0, 'role')).to eq('system')
-        expect(payload.dig('messages', 1, 'role')).to eq('user')
+        expect(payload.dig('generationConfig', 'temperature')).to eq(0.3)
+        expect(payload.dig('systemInstruction', 'parts', 0, 'text')).to eq('sys')
+        expect(payload.dig('contents', 0, 'role')).to eq('user')
+        expect(payload.dig('contents', 0, 'parts', 0, 'text')).to eq('usr')
 
         response
       end
@@ -28,7 +43,7 @@ RSpec.describe Commity::OllamaClient do
       content = client.generate(
         system: 'sys',
         user: 'usr',
-        model: 'llama3.2',
+        model: 'models/gemma-4-31b-it',
         temperature: '0.3',
         timeout_seconds: '90',
         open_timeout_seconds: '7'
@@ -38,15 +53,19 @@ RSpec.describe Commity::OllamaClient do
     end
 
     it 'falls back to defaults when numeric env inputs are invalid' do
-      response = instance_double('HTTParty::Response', success?: true, body: { message: { content: 'ok' } }.to_json,
-                                                       code: 200)
+      response = instance_double(
+        'HTTParty::Response',
+        success?: true,
+        body: { candidates: [{ content: { parts: [{ text: 'ok' }] } }] }.to_json,
+        code: 200
+      )
 
       expect(described_class).to receive(:post) do |_path, opts|
         expect(opts[:timeout]).to eq(described_class::DEFAULT_TIMEOUT_SECONDS)
         expect(opts[:open_timeout]).to eq(described_class::DEFAULT_OPEN_TIMEOUT_SECONDS)
 
         payload = JSON.parse(opts[:body])
-        expect(payload.dig('options', 'temperature')).to eq(described_class::DEFAULT_TEMPERATURE)
+        expect(payload.dig('generationConfig', 'temperature')).to eq(described_class::DEFAULT_TEMPERATURE)
         response
       end
 
@@ -60,14 +79,26 @@ RSpec.describe Commity::OllamaClient do
       )
     end
 
-    it 'includes Ollama error details when present' do
-      response = instance_double('HTTParty::Response', success?: false, body: { error: 'invalid model' }.to_json,
-                                                       code: 500)
+    it 'includes Google AI error details when present' do
+      response = instance_double(
+        'HTTParty::Response',
+        success?: false,
+        body: { error: { message: 'invalid API key' } }.to_json,
+        code: 401
+      )
       allow(described_class).to receive(:post).and_return(response)
 
       expect do
         client.generate(system: 'sys', user: 'usr')
-      end.to raise_error('Ollama error: 500 - invalid model')
+      end.to raise_error('Google AI error: 401 - invalid API key')
+    end
+
+    it 'raises when API key is not configured' do
+      client_without_key = described_class.new(config: {})
+
+      expect do
+        client_without_key.generate(system: 'sys', user: 'usr')
+      end.to raise_error(/Set GOOGLE_API_KEY \(or GEMINI_API_KEY\)/)
     end
   end
 end

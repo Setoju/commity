@@ -54,7 +54,7 @@ module Commity
 
     # Returns:
     # { content: String, summarized: Boolean, fallback_reason: String|nil }
-    def self.summarize_if_needed(diff, client:, model: 'llama3.2', chunks: nil)
+    def self.summarize_if_needed(diff, client:, model: Commity::GoogleClient::DEFAULT_MODEL, chunks: nil)
       parsed_chunks = chunks
       return { content: diff, summarized: false, fallback_reason: nil } if diff.bytesize <= THRESHOLD
 

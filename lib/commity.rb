@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'services/helpers/config_loader'
 require_relative 'services/git/git_reader'
 require_relative 'services/git/git_writer'
-require_relative 'services/ollama_client'
+require_relative 'services/google_client'
+require_relative 'services/helpers/config_loader'
 require_relative 'services/git/diff_parser'
 require_relative 'services/diff_summarization/diff_summarizer'
 require_relative 'services/helpers/prompt_builder'

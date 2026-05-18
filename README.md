@@ -1,6 +1,6 @@
 # Commity
 
-AI-powered commit message and pull request description generator for Git repositories, using a local Ollama model.
+AI-powered commit message and pull request description generator for Git repositories, using Google AI models.
 
 ## What It Does
 
@@ -16,7 +16,7 @@ Commity helps you:
 
 - Ruby 3.2+
 - Git
-- Ollama running locally at `http://localhost:11434`
+- Google AI API key
 - A Git repository as your working directory
 
 ## Install Dependencies (from source)
@@ -39,16 +39,27 @@ commity [options]
 
 ## Configuration
 
-You can configure default behavior using a `.commity.yaml` file in your project root.
-See .commity.yaml.example for a template.
+Commity uses a single configuration approach: environment variables.
 
-```yaml
-model: "llama3.2"
-ollama_url: "http://localhost:11434"
-candidates: 1
-base_branch: "main"
-no_copy: false
+Set variables in your shell, CI secret manager, or local `.env` file (in your project):
+
+```dotenv
+GOOGLE_API_KEY=your_google_ai_key
+
+# Optional overrides:
+# COMMITY_MODEL=gemma-4-31b-it
+# COMMITY_CANDIDATES=1
+# COMMITY_BASE_BRANCH=main
+# COMMITY_NO_COPY=false
 ```
+
+`GEMINI_API_KEY` is also accepted as an alias for `GOOGLE_API_KEY`.
+
+You can copy `.env.example` as a starting point.
+
+Your API key is sent directly from your local process to Google's API.
+Commity does not store it and does not proxy requests through any Commity server.
+Never commit `.env` to git.
 
 ### Options
 
@@ -64,6 +75,7 @@ no_copy: false
 2. Asks for confirmation before staging (`git add -A`).
 3. Ensures there are staged changes.
 4. Reads staged diff and generates commit message candidate(s).
+   - If the AI draft misses a conventional commit prefix, Commity auto-normalizes it to a valid conventional subject.
 5. If `--candidates` is greater than `1`, shows numbered candidates and asks you to select one.
 6. Shows selected message and asks: `Commit with this message? [y/e/N]`
    - `y`: commit now
@@ -96,9 +108,10 @@ Commit edit mode uses:
    - `## Motivation`
    - `## Changes Made`
    - `## Testing Notes`
-3. Builds GitHub compare URL with prefilled title/body using query params.
+3. Builds provider compare/MR URL with prefilled title/body using query params.
   - GitHub/GitBucket: compare URL
   - GitLab: new merge request URL
+   - If the URL would exceed safe browser/provider limits, Commity drops description prefill automatically and keeps the shortest usable URL.
 4. Asks before opening browser.
 
 The tool opens a browser URL only. It does not call provider APIs.
@@ -157,11 +170,11 @@ Core services:
   - `lib/services/git/git_writer.rb`: Reads status/staged state, stages (`git add -A`), commits with message file (`git commit --file`), reads branch and origin remote.
   - `lib/services/git/diff_parser.rb`: Parses diff blocks and derives change metadata.
   - `lib/services/git/pr/pr_opener.rb`: Parses GitHub/GitLab/GitBucket remotes, builds provider-specific PR/MR URL, opens browser cross-platform.
-- `lib/services/ollama_client.rb`: Sends chat requests to Ollama.
+- `lib/services/google_client.rb`: Sends generation requests to Google Generative Language API.
 - `lib/services/diff_summarization/diff_summarizer.rb`: Orchestrates large-diff summarization and summary combine.
   - `lib/services/diff_summarization/batch_runner.rb`: Runs asynchronous, batched per-file summarization jobs.
   - `lib/services/diff_summarization/fallback_builder.rb`: Builds deterministic summaries when model summarization fails or times out.
-- `lib/services/helpers/config_loader.rb`: Loads configuration from `.commity.yaml`.
+- `lib/services/helpers/config_loader.rb`: Loads configuration from environment variables.
   - `lib/services/helpers/prompt_builder.rb`: Builds strict system/user prompts for commit and PR modes.
   - `lib/services/helpers/interactive_prompt.rb`: Handles confirmation prompts, candidate selection, editor loop, and commit message validation.
   - `lib/services/helpers/clipboard.rb`: Provides cross-platform clipboard support.
@@ -182,12 +195,12 @@ The CLI reports user-friendly errors for common cases such as:
 
 - No changes/staged changes
 - Invalid or missing Git data
-- Ollama connection failures
+- Google AI API connectivity/authentication failures
 - Summarization timeouts on large diffs (automatically falls back to a deterministic summary and continues)
 - Browser open failures
 
 ## Notes
 
-- The model default is currently `llama3.2` in `OllamaClient`.
+- The default model is `gemma-4-31b-it` in `GoogleClient`.
 - PR browser URL body payloads are URL-encoded with `URI.encode_www_form`.
 - You can tune summarization worker concurrency with `DIFF_SUMMARY_WORKERS`.

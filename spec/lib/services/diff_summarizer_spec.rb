@@ -99,7 +99,7 @@ RSpec.describe Commity::DiffSummarizer do
         end
       end.new
 
-      summaries = described_class.summarize_chunks(chunks, client: client, model: 'llama3.2')
+      summaries = described_class.summarize_chunks(chunks, client: client, model: Commity::GoogleClient::DEFAULT_MODEL)
 
       expect(summaries[0]).to include("### lib/a.rb\n- summary for lib/a.rb")
       expect(summaries[1]).to include("### lib/b.rb\n- summary for lib/b.rb")
