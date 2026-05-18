@@ -2,12 +2,15 @@
 
 Gem::Specification.new do |spec|
   spec.name = 'commity'
-  spec.version = '1.2.2'
+  spec.version = '1.2.3'
   spec.authors = ['Setoju']
-  spec.summary = 'AI-powered commit and PR description generator using Ollama'
-  spec.description = 'Generates git commit messages and PR descriptions using local LLM via Ollama'
+  spec.email = ['setoju48@gmail.com']
+  spec.summary = 'AI-powered commit and PR description generator using Google AI models'
+  spec.description = 'Generates git commit messages and PR descriptions using Google AI text generation models. Supports GitHub, GitLab, and GitBucket with prefilled PR/MR forms.'
+  spec.homepage = 'https://github.com/setoju/commity'
+  spec.license = 'MIT'
 
-  spec.files = Dir['lib/**/*', 'bin/*', 'examples/*']
+  spec.files = Dir['lib/**/*', 'bin/*'] + ['LICENSE', 'README.md']
   spec.bindir = 'bin'
   spec.executables = ['commity']
   spec.require_paths = ['lib']
@@ -16,4 +19,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'dotenv', '~> 3.2'
   spec.add_dependency 'httparty', '~> 0.21'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

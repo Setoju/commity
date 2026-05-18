@@ -49,14 +49,14 @@ module Commity
     end
 
     LOCKFILE_PATTERNS = [
-      %r{Gemfile\.lock},
-      %r{package-lock\.json},
-      %r{yarn\.lock},
-      %r{pnpm-lock\.yaml},
-      %r{composer\.lock},
-      %r{mix\.lock},
-      %r{Cargo\.lock},
-      %r{Pipfile\.lock}
+      /Gemfile\.lock/,
+      /package-lock\.json/,
+      /yarn\.lock/,
+      /pnpm-lock\.yaml/,
+      /composer\.lock/,
+      /mix\.lock/,
+      /Cargo\.lock/,
+      /Pipfile\.lock/
     ].freeze
 
     def self.filter_diff_noise(diff)
@@ -78,9 +78,7 @@ module Commity
           end
         end
 
-        unless skip_chunk
-          filtered_lines << line
-        end
+        filtered_lines << line unless skip_chunk
       end
       filtered_lines.join
     end
