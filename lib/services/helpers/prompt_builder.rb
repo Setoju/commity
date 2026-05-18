@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module PromptBuilder
     COMMIT_SYSTEM = <<~PROMPT
       Your sole task is to write a Git commit message.

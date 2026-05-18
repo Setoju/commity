@@ -2,7 +2,7 @@
 
 require 'uri'
 
-module Commity
+module Commiti
   module PrOpener
     SCP_REMOTE = %r{\A(?<user>[^@]+)@(?<host>[^:\s/]+):(?<path>[^\s]+)\z}
     MAX_PREFILLED_URL_LENGTH = 1800

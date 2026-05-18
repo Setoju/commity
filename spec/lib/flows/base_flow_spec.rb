@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::Flows::BaseFlow do
+RSpec.describe Commiti::Flows::BaseFlow do
   let(:flow_class) do
     Class.new(described_class) do
       private
@@ -20,10 +20,10 @@ RSpec.describe Commity::Flows::BaseFlow do
   let(:flow) { flow_class.new(options: { candidates: 1, no_copy: true, base_branch: 'main' }) }
   let(:prompt) { { system: 'system prompt', user: 'user prompt' } }
   let(:diff_metadata) { { docs_only: false, total_files: 1 } }
-  let(:client) { instance_double('Commity::GoogleClient') }
+  let(:client) { instance_double('Commiti::GoogleClient') }
 
   before do
-    allow(Commity::Spinner).to receive(:run) { |_message, &block| block.call }
+    allow(Commiti::Spinner).to receive(:run) { |_message, &block| block.call }
   end
 
   describe '#generate_with_quality_check' do
@@ -37,7 +37,7 @@ RSpec.describe Commity::Flows::BaseFlow do
           client: client,
           prompt: prompt,
           diff_metadata: diff_metadata,
-          model: Commity::GoogleClient::DEFAULT_MODEL
+          model: Commiti::GoogleClient::DEFAULT_MODEL
         )
       end.to raise_error(/Generated commit is still invalid after retry/)
     end
@@ -52,7 +52,7 @@ RSpec.describe Commity::Flows::BaseFlow do
         client: client,
         prompt: prompt,
         diff_metadata: diff_metadata,
-        model: Commity::GoogleClient::DEFAULT_MODEL
+        model: Commiti::GoogleClient::DEFAULT_MODEL
       )
 
       expect(output).to eq(valid_subject)

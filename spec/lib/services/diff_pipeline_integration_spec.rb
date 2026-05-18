@@ -24,8 +24,8 @@ RSpec.describe 'Diff pipeline', :integration do
       #{large_hunk}
     DIFF
 
-    clipped = Commity::GitReader.clip_diff_context(diff, max_bytes: Commity::GitReader::MAX_DIFF_BYTES)
-    result = Commity::DiffSummarizer.summarize_if_needed(clipped, client: fake_summary_client_class.new)
+    clipped = Commiti::GitReader.clip_diff_context(diff, max_bytes: Commiti::GitReader::MAX_DIFF_BYTES)
+    result = Commiti::DiffSummarizer.summarize_if_needed(clipped, client: fake_summary_client_class.new)
 
     expect(clipped).to include('diff --git a/app/models/user.rb b/app/models/user.rb')
     expect(clipped).to include('@@ -1 +1,10000 @@')

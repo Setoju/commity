@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::GitWriter do
+RSpec.describe Commiti::GitWriter do
   def status(success)
     instance_double(Process::Status, success?: success)
   end

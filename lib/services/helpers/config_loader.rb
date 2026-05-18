@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   class ConfigLoader
     DEFAULT_CONFIG = {
       google_api_key: nil,
-      model: Commity::GoogleClient::DEFAULT_MODEL,
+      model: Commiti::GoogleClient::DEFAULT_MODEL,
       candidates: 1,
       base_branch: 'main',
       no_copy: false,
-      temperature: Commity::GoogleClient::DEFAULT_TEMPERATURE,
-      timeout_seconds: Commity::GoogleClient::DEFAULT_TIMEOUT_SECONDS,
-      open_timeout_seconds: Commity::GoogleClient::DEFAULT_OPEN_TIMEOUT_SECONDS
+      temperature: Commiti::GoogleClient::DEFAULT_TEMPERATURE,
+      timeout_seconds: Commiti::GoogleClient::DEFAULT_TIMEOUT_SECONDS,
+      open_timeout_seconds: Commiti::GoogleClient::DEFAULT_OPEN_TIMEOUT_SECONDS
     }.freeze
 
     # Loads configuration from environment variables.
@@ -18,13 +18,13 @@ module Commity
     def self.load(env: ENV)
       {
         google_api_key: google_api_key_from_env(env),
-        model: present_or_default(env.fetch('COMMITY_MODEL', nil), DEFAULT_CONFIG[:model]),
-        candidates: integer_or_default(env.fetch('COMMITY_CANDIDATES', nil), DEFAULT_CONFIG[:candidates]),
-        base_branch: present_or_default(env.fetch('COMMITY_BASE_BRANCH', nil), DEFAULT_CONFIG[:base_branch]),
-        no_copy: boolean_or_default(env.fetch('COMMITY_NO_COPY', nil), DEFAULT_CONFIG[:no_copy]),
-        temperature: float_or_default(env.fetch('COMMITY_MODEL_TEMPERATURE', nil), DEFAULT_CONFIG[:temperature]),
-        timeout_seconds: integer_or_default(env.fetch('COMMITY_MODEL_TIMEOUT_SECONDS', nil), DEFAULT_CONFIG[:timeout_seconds]),
-        open_timeout_seconds: integer_or_default(env.fetch('COMMITY_MODEL_OPEN_TIMEOUT_SECONDS', nil),
+        model: present_or_default(env.fetch('COMMITI_MODEL', nil), DEFAULT_CONFIG[:model]),
+        candidates: integer_or_default(env.fetch('COMMITI_CANDIDATES', nil), DEFAULT_CONFIG[:candidates]),
+        base_branch: present_or_default(env.fetch('COMMITI_BASE_BRANCH', nil), DEFAULT_CONFIG[:base_branch]),
+        no_copy: boolean_or_default(env.fetch('COMMITI_NO_COPY', nil), DEFAULT_CONFIG[:no_copy]),
+        temperature: float_or_default(env.fetch('COMMITI_MODEL_TEMPERATURE', nil), DEFAULT_CONFIG[:temperature]),
+        timeout_seconds: integer_or_default(env.fetch('COMMITI_MODEL_TIMEOUT_SECONDS', nil), DEFAULT_CONFIG[:timeout_seconds]),
+        open_timeout_seconds: integer_or_default(env.fetch('COMMITI_MODEL_OPEN_TIMEOUT_SECONDS', nil),
                                                  DEFAULT_CONFIG[:open_timeout_seconds])
       }
     end

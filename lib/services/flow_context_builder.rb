@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module FlowContextBuilder
     def self.build(flow_type:, diff:, client:, run_stage:, model:)
-      line_chunks = Commity::DiffParser.split_by_file_lines(diff)
-      diff_metadata = Commity::DiffParser.metadata_from_line_chunks(line_chunks)
+      line_chunks = Commiti::DiffParser.split_by_file_lines(diff)
+      diff_metadata = Commiti::DiffParser.metadata_from_line_chunks(line_chunks)
 
       summarized_result = run_stage.call('Preparing diff for AI model') do
-        Commity::DiffSummarizer.summarize_if_needed(
+        Commiti::DiffSummarizer.summarize_if_needed(
           diff,
           client: client,
           model: model,
@@ -15,7 +15,7 @@ module Commity
         )
       end
 
-      prompt = Commity::PromptBuilder.build(
+      prompt = Commiti::PromptBuilder.build(
         type: flow_type,
         diff: summarized_result[:content],
         summarized: summarized_result[:summarized],

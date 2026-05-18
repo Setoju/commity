@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module Spinner
     FRAMES = ['|', '/', '-', '\\'].freeze
     INTERVAL_SECONDS = 0.1

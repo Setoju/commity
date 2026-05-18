@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module DiffSummarizer
     module FallbackBuilder
       def mechanical_summary(diff)
@@ -11,7 +11,7 @@ module Commity
       end
 
       def fallback_summary(diff, chunks: nil)
-        parsed_chunks = chunks || Commity::DiffParser.split_by_file(diff)
+        parsed_chunks = chunks || Commiti::DiffParser.split_by_file(diff)
         files = []
 
         parsed_chunks.each do |chunk|

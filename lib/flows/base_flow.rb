@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module Flows
     class BaseFlow
       def initialize(options:)
         # Merge defaults/config file with CLI options (CLI options win)
-        @options = Commity::ConfigLoader.load.merge(options || {})
+        @options = Commiti::ConfigLoader.load.merge(options || {})
       end
 
       def run
         prepare!
         diff = collect_diff
-        client = Commity::GoogleClient.new(config: options)
+        client = Commiti::GoogleClient.new(config: options)
         selected_model = options[:model]
-        context = Commity::FlowContextBuilder.build(
+        context = Commiti::FlowContextBuilder.build(
           flow_type: flow_type,
           diff: diff,
           client: client,
           run_stage: method(:run_stage),
           model: selected_model
         )
-        Commity::MessagePresenter.print_summarization_notice(context[:summarized_result])
+        Commiti::MessagePresenter.print_summarization_notice(context[:summarized_result])
 
         candidates = generate_candidates(
           client: client,
@@ -51,7 +51,7 @@ module Commity
       def finalize(_message); end
 
       def run_stage(message, &)
-        Commity::Spinner.run(message, &)
+        Commiti::Spinner.run(message, &)
       end
 
       def generate_with_quality_check(client:, prompt:, diff_metadata:, model:)
@@ -75,15 +75,15 @@ module Commity
       end
 
       def select_message(candidates)
-        Commity::MessagePresenter.select_message(candidates)
+        Commiti::MessagePresenter.select_message(candidates)
       end
 
       def print_message(message)
-        Commity::MessagePresenter.print_message(message)
+        Commiti::MessagePresenter.print_message(message)
       end
 
       def maybe_copy_to_clipboard(message)
-        Commity::MessagePresenter.maybe_copy_to_clipboard(
+        Commiti::MessagePresenter.maybe_copy_to_clipboard(
           message,
           no_copy: options[:no_copy],
           run_stage: method(:run_stage)
@@ -91,7 +91,7 @@ module Commity
       end
 
       def message_generator
-        @message_generator ||= Commity::MessageGenerator.new(flow_type: flow_type, run_stage: method(:run_stage))
+        @message_generator ||= Commiti::MessageGenerator.new(flow_type: flow_type, run_stage: method(:run_stage))
       end
     end
   end

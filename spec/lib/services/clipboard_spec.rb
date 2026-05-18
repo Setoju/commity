@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::Clipboard do
+RSpec.describe Commiti::Clipboard do
   describe '.copy' do
     it 'uses pbcopy on mac' do
       io = instance_double(IO, write: nil)

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::GitReader do
+RSpec.describe Commiti::GitReader do
   describe '.split_by_file' do
     it 'splits a diff into file chunks' do
       diff = <<~DIFF

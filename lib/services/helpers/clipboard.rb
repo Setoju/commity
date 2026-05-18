@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module Clipboard
     def self.copy(text)
       case platform

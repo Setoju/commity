@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::InteractivePrompt do
+RSpec.describe Commiti::InteractivePrompt do
   describe '.commit_message_errors' do
     it 'flags empty messages' do
       expect(described_class.commit_message_errors('   ')).to include('Message cannot be empty.')

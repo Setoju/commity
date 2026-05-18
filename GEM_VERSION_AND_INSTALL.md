@@ -8,7 +8,7 @@ This document explains how to:
 
 ## 1. Update Gem Version
 
-Current gem version is set in `commity.gemspec`:
+Current gem version is set in `commiti.gemspec`:
 
 ```ruby
 spec.version = "0.1.0"
@@ -33,13 +33,13 @@ Use Semantic Versioning:
 From the project root:
 
 ```bash
-gem build commity.gemspec
+gem build commiti.gemspec
 ```
 
 This creates a file like:
 
 ```text
-commity-0.1.1.gem
+commiti-0.1.1.gem
 ```
 
 ## 3. Install the Gem Locally
@@ -47,13 +47,13 @@ commity-0.1.1.gem
 Install the newly built gem:
 
 ```bash
-gem install ./commity-1.0.7.gem
+gem install ./commiti-1.0.7.gem
 ```
 
 Then verify:
 
 ```bash
-commity --help
+commiti --help
 ```
 
 ## Reinstall After Another Change
@@ -61,7 +61,7 @@ commity --help
 If you iterate often, repeat:
 
 1. Bump `spec.version`
-2. Rebuild with `gem build commity.gemspec`
+2. Rebuild with `gem build commiti.gemspec`
 3. Install the new `.gem` file
 
 ## Optional Cleanup (Old Local Versions)
@@ -69,13 +69,13 @@ If you iterate often, repeat:
 List installed versions:
 
 ```bash
-gem list commity
+gem list commiti
 ```
 
 Uninstall an old one:
 
 ```bash
-gem uninstall commity -v 0.1.0
+gem uninstall commiti -v 0.1.0
 ```
 
 ## Run From Source Without Installing
@@ -84,7 +84,7 @@ For development, you can run directly:
 
 ```bash
 bundle install
-bundle exec ruby -Ilib bin/commity --help
+bundle exec ruby -Ilib bin/commiti --help
 ```
 
 This is useful for quick testing before publishing/installing a new gem build.

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::Spinner do
+RSpec.describe Commiti::Spinner do
   describe '.run' do
     it 'runs synchronously without thread when stdout is not a tty' do
       allow($stdout).to receive(:tty?).and_return(false)

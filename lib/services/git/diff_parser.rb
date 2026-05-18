@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module DiffParser
     DOC_EXTENSIONS = %w[.md .markdown .rst .adoc .txt].freeze
 

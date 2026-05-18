@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module DiffSummarizer
     module BatchRunner
       def summarize_chunks(chunks, client:, model:)

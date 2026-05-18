@@ -1,10 +1,10 @@
-# Commity
+# Commiti
 
 AI-powered commit message and pull request description generator for Git repositories, using Google AI models.
 
 ## What It Does
 
-Commity helps you:
+Commiti helps you:
 
 - Generate conventional commit messages from staged changes.
 - Generate structured pull request descriptions from branch diffs.
@@ -28,18 +28,18 @@ bundle install
 ## CLI Usage
 
 ```bash
-bundle exec ruby -Ilib bin/commity [options]
+bundle exec ruby -Ilib bin/commiti [options]
 ```
 
 Or after gem installation:
 
 ```bash
-commity [options]
+commiti [options]
 ```
 
 ## Configuration
 
-Commity uses a single configuration approach: environment variables.
+Commiti uses a single configuration approach: environment variables.
 
 Set variables in your shell, CI secret manager, or local `.env` file (in your project):
 
@@ -47,10 +47,10 @@ Set variables in your shell, CI secret manager, or local `.env` file (in your pr
 GOOGLE_API_KEY=your_google_ai_key
 
 # Optional overrides:
-# COMMITY_MODEL=gemma-4-31b-it
-# COMMITY_CANDIDATES=1
-# COMMITY_BASE_BRANCH=main
-# COMMITY_NO_COPY=false
+# COMMITI_MODEL=gemma-4-31b-it
+# COMMITI_CANDIDATES=1
+# COMMITI_BASE_BRANCH=main
+# COMMITI_NO_COPY=false
 ```
 
 `GEMINI_API_KEY` is also accepted as an alias for `GOOGLE_API_KEY`.
@@ -58,7 +58,7 @@ GOOGLE_API_KEY=your_google_ai_key
 You can copy `.env.example` as a starting point.
 
 Your API key is sent directly from your local process to Google's API.
-Commity does not store it and does not proxy requests through any Commity server.
+Commiti does not store it and does not proxy requests through any Commiti server.
 Never commit `.env` to git.
 
 ### Options
@@ -75,7 +75,7 @@ Never commit `.env` to git.
 2. Asks for confirmation before staging (`git add -A`).
 3. Ensures there are staged changes.
 4. Reads staged diff and generates commit message candidate(s).
-   - If the AI draft misses a conventional commit prefix, Commity auto-normalizes it to a valid conventional subject.
+   - If the AI draft misses a conventional commit prefix, Commiti auto-normalizes it to a valid conventional subject.
 5. If `--candidates` is greater than `1`, shows numbered candidates and asks you to select one.
 6. Shows selected message and asks: `Commit with this message? [y/e/N]`
    - `y`: commit now
@@ -111,14 +111,14 @@ Commit edit mode uses:
 3. Builds provider compare/MR URL with prefilled title/body using query params.
   - GitHub/GitBucket: compare URL
   - GitLab: new merge request URL
-   - If the URL would exceed safe browser/provider limits, Commity drops description prefill automatically and keeps the shortest usable URL.
+   - If the URL would exceed safe browser/provider limits, Commiti drops description prefill automatically and keeps the shortest usable URL.
 4. Asks before opening browser.
 
 The tool opens a browser URL only. It does not call provider APIs.
 
 ### Diff Context Protocol
 
-When a diff exceeds internal size limits, Commity clips and summarizes using file-aware rules:
+When a diff exceeds internal size limits, Commiti clips and summarizes using file-aware rules:
 
 - Keeps full `diff --git` file headers where possible.
 - Preserves `@@ ... @@` hunk headers before clipping hunk bodies.
@@ -133,32 +133,32 @@ This improves semantic quality for AI generation compared with naive truncation.
 Generate commit message and commit interactively:
 
 ```bash
-bundle exec ruby -Ilib bin/commity --type commit
+bundle exec ruby -Ilib bin/commiti --type commit
 ```
 
 Generate multiple commit message candidates and pick one:
 
 ```bash
-bundle exec ruby -Ilib bin/commity --type commit --candidates 3
+bundle exec ruby -Ilib bin/commiti --type commit --candidates 3
 ```
 
 Generate PR description against `develop`:
 
 ```bash
-bundle exec ruby -Ilib bin/commity --type pr --base develop
+bundle exec ruby -Ilib bin/commiti --type pr --base develop
 ```
 
 Print only, do not copy to clipboard:
 
 ```bash
-bundle exec ruby -Ilib bin/commity --type pr --no-copy
+bundle exec ruby -Ilib bin/commiti --type pr --no-copy
 ```
 
 ## Implementation Overview
 
 Main entrypoint and flow orchestration:
 
-- `bin/commity`: CLI parsing and flow dispatch
+- `bin/commiti`: CLI parsing and flow dispatch
 - `lib/flows/base_flow.rb`: shared generation pipeline and quality checks
 - `lib/flows/commit_flow.rb`: commit-specific staging/edit/commit interactions
 - `lib/flows/pr_flow.rb`: PR-specific URL generation/open flow
@@ -181,13 +181,13 @@ Core services:
   - `lib/services/helpers/spinner.rb`: Displays a spinner for long-running operations.
 - `lib/services/message_generator.rb`: Generates commit and PR messages with quality checks.
 - `lib/services/message_presenter.rb`: Presents generated messages to the user.
-- `lib/services/flow_context_builder.rb`: Builds the context for different Commity flows.
+- `lib/services/flow_context_builder.rb`: Builds the context for different Commiti flows.
 - `lib/services/git/commit/commit_staging.rb`: Handles staging changes for a commit.
 - `lib/services/git/commit/commit_execution.rb`: Executes the git commit command.
 
 Service loading:
 
-- `lib/commity.rb` requires all service modules.
+- `lib/commiti.rb` requires all service modules.
 
 ## Error Handling
 

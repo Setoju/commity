@@ -5,7 +5,7 @@ require 'shellwords'
 require 'tempfile'
 require 'tty-reader'
 
-module Commity
+module Commiti
   module InteractivePrompt
     COMMIT_SUBJECT_MAX_LENGTH = 100
     COMMIT_PREFIX = /\A(feat|fix|chore|refactor|docs|style|test|perf|ci|build|revert)(\([^)]+\))?!?:\s+\S/i
@@ -53,7 +53,7 @@ module Commity
       # Keep the temp file closed while the external editor runs.
       # On Windows, open handles can prevent editors like Notepad from
       # saving in place, which can make edits appear to be ignored.
-      file = Tempfile.new(['commity-msg', '.txt'])
+      file = Tempfile.new(['commiti-msg', '.txt'])
       begin
         file.write("#{initial_message.to_s.rstrip}\n")
         file.flush

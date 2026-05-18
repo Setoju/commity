@@ -4,7 +4,7 @@ require 'httparty'
 require 'json'
 require 'uri'
 
-module Commity
+module Commiti
   class GoogleClient
     include HTTParty
 
@@ -14,7 +14,7 @@ module Commity
     DEFAULT_TIMEOUT_SECONDS = 180
     DEFAULT_OPEN_TIMEOUT_SECONDS = 10
 
-    def initialize(config: Commity::ConfigLoader.load)
+    def initialize(config: Commiti::ConfigLoader.load)
       @config = config || {}
     end
 

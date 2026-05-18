@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::DiffSummarizer do
+RSpec.describe Commiti::DiffSummarizer do
   let(:small_diff) { "diff --git a/a.rb b/a.rb\n@@ -1 +1 @@\n-old\n+new\n" }
 
   describe '.summarize_if_needed' do
@@ -99,7 +99,7 @@ RSpec.describe Commity::DiffSummarizer do
         end
       end.new
 
-      summaries = described_class.summarize_chunks(chunks, client: client, model: Commity::GoogleClient::DEFAULT_MODEL)
+      summaries = described_class.summarize_chunks(chunks, client: client, model: Commiti::GoogleClient::DEFAULT_MODEL)
 
       expect(summaries[0]).to include("### lib/a.rb\n- summary for lib/a.rb")
       expect(summaries[1]).to include("### lib/b.rb\n- summary for lib/b.rb")

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   class MessageGenerator
     COMMIT_PREFIX_ERROR = 'First line must start with a conventional commit type (feat:, fix:, etc.).'
     DEFAULT_COMMIT_SUBJECT = 'update project files'
@@ -89,7 +89,7 @@ module Commity
     end
 
     def commit_generation_reason(message:, diff_metadata:)
-      errors = Commity::InteractivePrompt.commit_message_errors(message)
+      errors = Commiti::InteractivePrompt.commit_message_errors(message)
       return errors.join(' ') unless errors.empty?
 
       lower = message.downcase
@@ -132,19 +132,19 @@ module Commity
     end
 
     def normalize_commit_with_prefix(message, diff_metadata:)
-      errors = Commity::InteractivePrompt.commit_message_errors(message)
+      errors = Commiti::InteractivePrompt.commit_message_errors(message)
       return nil unless errors.include?(COMMIT_PREFIX_ERROR)
 
       source_subject = cleaned_commit_subject(message)
       source_subject = DEFAULT_COMMIT_SUBJECT if source_subject.empty?
 
       prefix = inferred_commit_prefix(source_subject, diff_metadata: diff_metadata)
-      max_subject_length = Commity::InteractivePrompt::COMMIT_SUBJECT_MAX_LENGTH - "#{prefix}: ".length
+      max_subject_length = Commiti::InteractivePrompt::COMMIT_SUBJECT_MAX_LENGTH - "#{prefix}: ".length
       subject = source_subject[0, max_subject_length].to_s.rstrip
       subject = DEFAULT_COMMIT_SUBJECT[0, max_subject_length] if subject.empty?
 
       normalized = "#{prefix}: #{subject}"
-      return nil unless Commity::InteractivePrompt.commit_message_errors(normalized).empty?
+      return nil unless Commiti::InteractivePrompt.commit_message_errors(normalized).empty?
 
       normalized
     end

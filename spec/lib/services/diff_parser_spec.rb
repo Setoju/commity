@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::DiffParser do
+RSpec.describe Commiti::DiffParser do
   describe '.split_by_file_lines' do
     it 'splits diff blocks into path and line arrays' do
       diff = <<~DIFF

@@ -4,18 +4,18 @@ require 'spec_helper'
 require 'cgi'
 require 'uri'
 
-RSpec.describe Commity::PrOpener do
+RSpec.describe Commiti::PrOpener do
   describe '.compare_url' do
     it 'builds a GitHub compare URL from SSH origin' do
       url = described_class.compare_url(
-        origin_url: 'git@github.com:acme/commity.git',
+        origin_url: 'git@github.com:acme/commiti.git',
         base_branch: 'main',
         head_branch: 'feat-x',
         title: 'My PR',
         body: 'Body text'
       )
 
-      expect(url).to start_with('https://github.com/acme/commity/compare/main...feat-x?')
+      expect(url).to start_with('https://github.com/acme/commiti/compare/main...feat-x?')
 
       query = CGI.parse(URI.parse(url).query)
       expect(query['title']).to eq(['My PR'])
@@ -24,14 +24,14 @@ RSpec.describe Commity::PrOpener do
 
     it 'builds a GitLab merge request URL from SSH origin' do
       url = described_class.compare_url(
-        origin_url: 'git@gitlab.com:acme/subgroup/commity.git',
+        origin_url: 'git@gitlab.com:acme/subgroup/commiti.git',
         base_branch: 'main',
         head_branch: 'feat-x',
         title: 'My MR',
         body: 'MR body'
       )
 
-      expect(url).to start_with('https://gitlab.com/acme/subgroup/commity/-/merge_requests/new?')
+      expect(url).to start_with('https://gitlab.com/acme/subgroup/commiti/-/merge_requests/new?')
 
       query = CGI.parse(URI.parse(url).query)
       expect(query['merge_request[source_branch]']).to eq(['feat-x'])
@@ -42,7 +42,7 @@ RSpec.describe Commity::PrOpener do
 
     it 'omits GitHub body prefill when URL would be too long' do
       url = described_class.compare_url(
-        origin_url: 'git@github.com:acme/commity.git',
+        origin_url: 'git@github.com:acme/commiti.git',
         base_branch: 'main',
         head_branch: 'feat-x',
         title: 'My PR',
@@ -57,7 +57,7 @@ RSpec.describe Commity::PrOpener do
 
     it 'omits GitLab description prefill when URL would be too long' do
       url = described_class.compare_url(
-        origin_url: 'git@gitlab.com:acme/subgroup/commity.git',
+        origin_url: 'git@gitlab.com:acme/subgroup/commiti.git',
         base_branch: 'main',
         head_branch: 'feat-x',
         title: 'My MR',
@@ -72,14 +72,14 @@ RSpec.describe Commity::PrOpener do
 
     it 'builds a GitBucket compare URL from HTTPS origin' do
       url = described_class.compare_url(
-        origin_url: 'https://gitbucket.example.com/acme/commity.git',
+        origin_url: 'https://gitbucket.example.com/acme/commiti.git',
         base_branch: 'main',
         head_branch: 'feat/with-slash',
         title: 'My PR',
         body: 'Body text'
       )
 
-      expect(url).to start_with('https://gitbucket.example.com/acme/commity/compare/main...feat%2Fwith-slash?')
+      expect(url).to start_with('https://gitbucket.example.com/acme/commiti/compare/main...feat%2Fwith-slash?')
 
       query = CGI.parse(URI.parse(url).query)
       expect(query['title']).to eq(['My PR'])

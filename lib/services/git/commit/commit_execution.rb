@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module CommitExecution
     def self.maybe_commit(initial_message, run_stage:, print_message:)
       working_message = initial_message
 
       loop do
-        action = Commity::InteractivePrompt.ask_commit_action
+        action = Commiti::InteractivePrompt.ask_commit_action
 
         case action
         when :yes
-          errors = Commity::InteractivePrompt.commit_message_errors(working_message)
+          errors = Commiti::InteractivePrompt.commit_message_errors(working_message)
           unless errors.empty?
             puts "\nCurrent message needs fixes before commit:"
             errors.each { |error| puts "- #{error}" }
 
-            if Commity::InteractivePrompt.ask_yes_no('Open editor to fix now?', default: :yes)
+            if Commiti::InteractivePrompt.ask_yes_no('Open editor to fix now?', default: :yes)
               edited = edit_message_until_valid(working_message)
               if edited.nil?
                 puts "\nEditor did not exit successfully. Commit skipped.\n\n"
@@ -31,7 +31,7 @@ module Commity
             return
           end
 
-          output = run_stage.call('Writing commit') { Commity::GitWriter.commit_with_message_file(working_message) }
+          output = run_stage.call('Writing commit') { Commiti::GitWriter.commit_with_message_file(working_message) }
           puts output unless output.to_s.strip.empty?
           puts "\nCommit created.\n\n"
           return
@@ -55,22 +55,22 @@ module Commity
       working = initial_message
 
       loop do
-        edited = Commity::InteractivePrompt.edit_message(working)
+        edited = Commiti::InteractivePrompt.edit_message(working)
         return nil if edited.nil?
 
         if edited == working.to_s.strip
           puts "\nNo changes detected in editor."
-          return edited unless Commity::InteractivePrompt.ask_yes_no('Re-open editor now?', default: :yes)
+          return edited unless Commiti::InteractivePrompt.ask_yes_no('Re-open editor now?', default: :yes)
 
           next
         end
 
-        errors = Commity::InteractivePrompt.commit_message_errors(edited)
+        errors = Commiti::InteractivePrompt.commit_message_errors(edited)
         return edited if errors.empty?
 
         puts "\nEdited message needs fixes:"
         errors.each { |error| puts "- #{error}" }
-        return edited unless Commity::InteractivePrompt.ask_yes_no('Re-open editor now?', default: :yes)
+        return edited unless Commiti::InteractivePrompt.ask_yes_no('Re-open editor now?', default: :yes)
 
         working = edited
       end

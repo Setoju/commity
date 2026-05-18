@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'json'
 
-RSpec.describe Commity::GoogleClient do
+RSpec.describe Commiti::GoogleClient do
   let(:client) do
     described_class.new(
       config: {

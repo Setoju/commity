@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::ConfigLoader do
+RSpec.describe Commiti::ConfigLoader do
   describe '.load' do
     let(:env) { {} }
 
@@ -22,13 +22,13 @@ RSpec.describe Commity::ConfigLoader do
     it 'loads values from environment variables' do
       env.merge!(
         'GOOGLE_API_KEY' => 'key-123',
-        'COMMITY_MODEL' => 'gemini-2.5-flash',
-        'COMMITY_CANDIDATES' => '3',
-        'COMMITY_BASE_BRANCH' => 'develop',
-        'COMMITY_NO_COPY' => 'true',
-        'COMMITY_MODEL_TEMPERATURE' => '0.5',
-        'COMMITY_MODEL_TIMEOUT_SECONDS' => '240',
-        'COMMITY_MODEL_OPEN_TIMEOUT_SECONDS' => '20'
+        'COMMITI_MODEL' => 'gemini-2.5-flash',
+        'COMMITI_CANDIDATES' => '3',
+        'COMMITI_BASE_BRANCH' => 'develop',
+        'COMMITI_NO_COPY' => 'true',
+        'COMMITI_MODEL_TEMPERATURE' => '0.5',
+        'COMMITI_MODEL_TIMEOUT_SECONDS' => '240',
+        'COMMITI_MODEL_OPEN_TIMEOUT_SECONDS' => '20'
       )
 
       config = described_class.load(env: env)
@@ -53,11 +53,11 @@ RSpec.describe Commity::ConfigLoader do
 
     it 'falls back to defaults when numeric and boolean values are invalid' do
       env.merge!(
-        'COMMITY_CANDIDATES' => 'abc',
-        'COMMITY_NO_COPY' => 'wat',
-        'COMMITY_MODEL_TEMPERATURE' => 'nan-nope',
-        'COMMITY_MODEL_TIMEOUT_SECONDS' => 'oops',
-        'COMMITY_MODEL_OPEN_TIMEOUT_SECONDS' => 'oops'
+        'COMMITI_CANDIDATES' => 'abc',
+        'COMMITI_NO_COPY' => 'wat',
+        'COMMITI_MODEL_TEMPERATURE' => 'nan-nope',
+        'COMMITI_MODEL_TIMEOUT_SECONDS' => 'oops',
+        'COMMITI_MODEL_OPEN_TIMEOUT_SECONDS' => 'oops'
       )
 
       config = described_class.load(env: env)

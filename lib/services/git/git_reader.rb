@@ -3,10 +3,10 @@
 require 'open3'
 require_relative 'diff_parser'
 
-module Commity
+module Commiti
   module GitReader
     MAX_DIFF_BYTES = 50_000
-    TRUNCATION_NOTICE = "\n# ... diff clipped by Commity to preserve context under size limit\n"
+    TRUNCATION_NOTICE = "\n# ... diff clipped by Commiti to preserve context under size limit\n"
 
     def self.staged_diff
       # Strip context lines using -U0 and filter out binary/lockfile noise
@@ -92,7 +92,7 @@ module Commity
 
     # Returns [{ path: String, lines: Array<String> }]
     def self.split_by_file(diff)
-      Commity::DiffParser.split_by_file_lines(diff)
+      Commiti::DiffParser.split_by_file_lines(diff)
     end
 
     def self.clip_chunks(chunks, max_bytes:)

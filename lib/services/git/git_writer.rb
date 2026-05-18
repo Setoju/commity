@@ -3,7 +3,7 @@
 require 'open3'
 require 'tempfile'
 
-module Commity
+module Commiti
   module GitWriter
     def self.status_short
       out, status = Open3.capture2('git', 'status', '--short')
@@ -27,7 +27,7 @@ module Commity
     end
 
     def self.commit_with_message_file(message)
-      Tempfile.create(['commity-commit', '.txt']) do |file|
+      Tempfile.create(['commiti-commit', '.txt']) do |file|
         file.write("#{message.to_s.rstrip}\n")
         file.flush
 

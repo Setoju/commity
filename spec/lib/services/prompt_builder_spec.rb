@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Commity::PromptBuilder do
+RSpec.describe Commiti::PromptBuilder do
   describe '.build' do
     it 'builds commit prompt with scope overview and raw diff block' do
       prompt = described_class.build(type: :commit, diff: 'diff --git a/a.rb b/a.rb', summarized: false)

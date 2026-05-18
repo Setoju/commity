@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Commity
+module Commiti
   module MessagePresenter
     def self.print_summarization_notice(summarized_result)
       if summarized_result[:fallback_reason]
@@ -17,7 +17,7 @@ module Commity
       end
 
       print_candidates(candidates)
-      selected_index = Commity::InteractivePrompt.ask_candidate_selection(candidates.length)
+      selected_index = Commiti::InteractivePrompt.ask_candidate_selection(candidates.length)
       selected_message = candidates[selected_index]
       puts "\nUsing candidate #{selected_index + 1}."
       print_message(selected_message)
@@ -27,7 +27,7 @@ module Commity
     def self.maybe_copy_to_clipboard(message, no_copy:, run_stage:)
       return if no_copy
 
-      copied = run_stage.call('Copying output to clipboard') { Commity::Clipboard.copy(message) }
+      copied = run_stage.call('Copying output to clipboard') { Commiti::Clipboard.copy(message) }
       if copied
         puts "Copied to clipboard!\n\n"
       else

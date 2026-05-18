@@ -3,7 +3,7 @@
 
 require 'optparse'
 require 'dotenv/load'
-require 'commity'
+require 'commiti'
 
 options = {
   type: :commit
@@ -12,8 +12,8 @@ options = {
 OptionParser.new do |opts|
   opts.banner = <<~BANNER
 
-    AI Commit - Powered by Google AI (#{Commity::GoogleClient::DEFAULT_MODEL})
-    Usage: commity [options]
+    AI Commit - Powered by Google AI (#{Commiti::GoogleClient::DEFAULT_MODEL})
+    Usage: commiti [options]
 
   BANNER
 
@@ -43,9 +43,9 @@ end.parse!
 
 begin
   flow = if options[:type] == :pr
-           Commity::Flows::PrFlow.new(options: options)
+           Commiti::Flows::PrFlow.new(options: options)
          else
-           Commity::Flows::CommitFlow.new(options: options)
+           Commiti::Flows::CommitFlow.new(options: options)
          end
 
   flow.run
