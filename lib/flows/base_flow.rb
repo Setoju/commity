@@ -11,19 +11,22 @@ module Commity
       def run
         prepare!
         diff = collect_diff
-        client = Commity::OllamaClient.new
+        client = Commity::GoogleClient.new(config: options)
+        selected_model = options[:model]
         context = Commity::FlowContextBuilder.build(
           flow_type: flow_type,
           diff: diff,
           client: client,
-          run_stage: method(:run_stage)
+          run_stage: method(:run_stage),
+          model: selected_model
         )
         Commity::MessagePresenter.print_summarization_notice(context[:summarized_result])
 
         candidates = generate_candidates(
           client: client,
           prompt: context[:prompt],
-          diff_metadata: context[:diff_metadata]
+          diff_metadata: context[:diff_metadata],
+          model: selected_model
         )
         message = select_message(candidates)
 
@@ -51,13 +54,24 @@ module Commity
         Commity::Spinner.run(message, &)
       end
 
-      def generate_with_quality_check(client:, prompt:, diff_metadata:)
-        message_generator.generate_with_quality_check(client: client, prompt: prompt, diff_metadata: diff_metadata)
+      def generate_with_quality_check(client:, prompt:, diff_metadata:, model:)
+        message_generator.generate_with_quality_check(
+          client: client,
+          prompt: prompt,
+          diff_metadata: diff_metadata,
+          model: model
+        )
       end
 
-      def generate_candidates(client:, prompt:, diff_metadata:)
+      def generate_candidates(client:, prompt:, diff_metadata:, model:)
         count = options[:candidates].to_i
-        message_generator.generate_candidates(client: client, prompt: prompt, diff_metadata: diff_metadata, count: count)
+        message_generator.generate_candidates(
+          client: client,
+          prompt: prompt,
+          diff_metadata: diff_metadata,
+          count: count,
+          model: model
+        )
       end
 
       def select_message(candidates)

@@ -2,12 +2,17 @@
 
 module Commity
   module FlowContextBuilder
-    def self.build(flow_type:, diff:, client:, run_stage:)
+    def self.build(flow_type:, diff:, client:, run_stage:, model:)
       line_chunks = Commity::DiffParser.split_by_file_lines(diff)
       diff_metadata = Commity::DiffParser.metadata_from_line_chunks(line_chunks)
 
       summarized_result = run_stage.call('Preparing diff for AI model') do
-        Commity::DiffSummarizer.summarize_if_needed(diff, client: client, chunks: summary_chunks(line_chunks))
+        Commity::DiffSummarizer.summarize_if_needed(
+          diff,
+          client: client,
+          model: model,
+          chunks: summary_chunks(line_chunks)
+        )
       end
 
       prompt = Commity::PromptBuilder.build(

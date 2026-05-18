@@ -39,8 +39,8 @@ RSpec.describe Commity::InteractivePrompt do
 
   describe '.editor_command' do
     around do |example|
-      old_visual = ENV['VISUAL']
-      old_editor = ENV['EDITOR']
+      old_visual = ENV.fetch('VISUAL', nil)
+      old_editor = ENV.fetch('EDITOR', nil)
 
       example.run
     ensure

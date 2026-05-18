@@ -75,18 +75,14 @@ module Commity
 
       first_line = cleaned.lines.first.to_s.strip
       errors = []
-      unless first_line.match?(COMMIT_PREFIX)
-        errors << 'First line must start with a conventional commit type (feat:, fix:, etc.).'
-      end
-      if first_line.length > COMMIT_SUBJECT_MAX_LENGTH
-        errors << "First line should be #{COMMIT_SUBJECT_MAX_LENGTH} characters or fewer."
-      end
+      errors << 'First line must start with a conventional commit type (feat:, fix:, etc.).' unless first_line.match?(COMMIT_PREFIX)
+      errors << "First line should be #{COMMIT_SUBJECT_MAX_LENGTH} characters or fewer." if first_line.length > COMMIT_SUBJECT_MAX_LENGTH
       errors
     end
 
     def self.editor_command
-      preferred = ENV['VISUAL']
-      preferred = ENV['EDITOR'] if preferred.to_s.strip.empty?
+      preferred = ENV.fetch('VISUAL', nil)
+      preferred = ENV.fetch('EDITOR', nil) if preferred.to_s.strip.empty?
 
       if preferred.to_s.strip.empty?
         return ['notepad'] if windows?
