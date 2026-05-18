@@ -5,21 +5,56 @@ require 'uri'
 module Commity
   module PrOpener
     SCP_REMOTE = %r{\A(?<user>[^@]+)@(?<host>[^:\s/]+):(?<path>[^\s]+)\z}
+    MAX_PREFILLED_URL_LENGTH = 1800
+    MAX_PREFILLED_TITLE_LENGTH = 120
 
     def self.compare_url(origin_url:, base_branch:, head_branch:, title:, body:)
       remote = extract_remote_info(origin_url)
-      if remote.nil?
-        raise 'Supported providers for browser PR opening are GitHub, GitLab, and GitBucket.'
-      end
+      raise 'Supported providers for browser PR opening are GitHub, GitLab, and GitBucket.' if remote.nil?
 
-      case remote[:provider]
-      when :gitlab
+      full_url = prefilled_url(
+        remote: remote,
+        base_branch: base_branch,
+        head_branch: head_branch,
+        title: title,
+        body: body,
+        include_title: true,
+        include_body: true
+      )
+      return full_url if full_url.length <= MAX_PREFILLED_URL_LENGTH
+
+      without_body = prefilled_url(
+        remote: remote,
+        base_branch: base_branch,
+        head_branch: head_branch,
+        title: title,
+        body: body,
+        include_title: true,
+        include_body: false
+      )
+      return without_body if without_body.length <= MAX_PREFILLED_URL_LENGTH
+
+      prefilled_url(
+        remote: remote,
+        base_branch: base_branch,
+        head_branch: head_branch,
+        title: title,
+        body: body,
+        include_title: false,
+        include_body: false
+      )
+    end
+
+    def self.prefilled_url(remote:, base_branch:, head_branch:, title:, body:, include_title:, include_body:)
+      if remote[:provider] == :gitlab
         gitlab_mr_url(
           remote: remote,
           base_branch: base_branch,
           head_branch: head_branch,
           title: title,
-          body: body
+          body: body,
+          include_title: include_title,
+          include_description: include_body
         )
       else
         github_like_compare_url(
@@ -27,17 +62,20 @@ module Commity
           base_branch: base_branch,
           head_branch: head_branch,
           title: title,
-          body: body
+          body: body,
+          include_title: include_title,
+          include_body: include_body
         )
       end
     end
+    private_class_method :prefilled_url
 
-    def self.github_like_compare_url(remote:, base_branch:, head_branch:, title:, body:)
-      query = URI.encode_www_form(
-        'expand' => '1',
-        'title' => title,
-        'body' => body
-      )
+    def self.github_like_compare_url(remote:, base_branch:, head_branch:, title:, body:, include_title: true, include_body: true)
+      query_params = { 'expand' => '1' }
+      normalized_title = normalize_title(title)
+      query_params['title'] = normalized_title if include_title && !normalized_title.empty?
+      query_params['body'] = body.to_s if include_body && !body.to_s.empty?
+      query = URI.encode_www_form(query_params)
 
       base = "#{remote[:web_scheme]}://#{remote[:host]}"
       path = "#{remote[:namespace]}/#{remote[:repo]}"
@@ -45,19 +83,26 @@ module Commity
       "#{base}/#{path}/compare/#{encode_branch_for_path(base_branch)}...#{encode_branch_for_path(head_branch)}?#{query}"
     end
 
-    def self.gitlab_mr_url(remote:, base_branch:, head_branch:, title:, body:)
-      query = URI.encode_www_form(
+    def self.gitlab_mr_url(remote:, base_branch:, head_branch:, title:, body:, include_title: true, include_description: true)
+      query_params = {
         'merge_request[source_branch]' => head_branch,
-        'merge_request[target_branch]' => base_branch,
-        'merge_request[title]' => title,
-        'merge_request[description]' => body
-      )
+        'merge_request[target_branch]' => base_branch
+      }
+      normalized_title = normalize_title(title)
+      query_params['merge_request[title]'] = normalized_title if include_title && !normalized_title.empty?
+      query_params['merge_request[description]'] = body.to_s if include_description && !body.to_s.empty?
+      query = URI.encode_www_form(query_params)
 
       base = "#{remote[:web_scheme]}://#{remote[:host]}"
       path = "#{remote[:namespace]}/#{remote[:repo]}"
 
       "#{base}/#{path}/-/merge_requests/new?#{query}"
     end
+
+    def self.normalize_title(title)
+      title.to_s.strip[0, MAX_PREFILLED_TITLE_LENGTH]
+    end
+    private_class_method :normalize_title
 
     def self.encode_branch_for_path(branch)
       URI.encode_www_form_component(branch.to_s).gsub('+', '%20')

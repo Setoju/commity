@@ -40,6 +40,36 @@ RSpec.describe Commity::PrOpener do
       expect(query['merge_request[description]']).to eq(['MR body'])
     end
 
+    it 'omits GitHub body prefill when URL would be too long' do
+      url = described_class.compare_url(
+        origin_url: 'git@github.com:acme/commity.git',
+        base_branch: 'main',
+        head_branch: 'feat-x',
+        title: 'My PR',
+        body: 'x' * 6_000
+      )
+
+      query = CGI.parse(URI.parse(url).query)
+      expect(query['title']).to eq(['My PR'])
+      expect(query).not_to have_key('body')
+      expect(url.length).to be <= described_class::MAX_PREFILLED_URL_LENGTH
+    end
+
+    it 'omits GitLab description prefill when URL would be too long' do
+      url = described_class.compare_url(
+        origin_url: 'git@gitlab.com:acme/subgroup/commity.git',
+        base_branch: 'main',
+        head_branch: 'feat-x',
+        title: 'My MR',
+        body: 'x' * 6_000
+      )
+
+      query = CGI.parse(URI.parse(url).query)
+      expect(query['merge_request[title]']).to eq(['My MR'])
+      expect(query).not_to have_key('merge_request[description]')
+      expect(url.length).to be <= described_class::MAX_PREFILLED_URL_LENGTH
+    end
+
     it 'builds a GitBucket compare URL from HTTPS origin' do
       url = described_class.compare_url(
         origin_url: 'https://gitbucket.example.com/acme/commity.git',
@@ -105,9 +135,9 @@ RSpec.describe Commity::PrOpener do
 
     it 'keeps nested namespaces for GitLab remotes' do
       expect(described_class.extract_owner_repo('git@gitlab.com:acme/subgroup/repo.git')).to eq({
-        owner: 'acme/subgroup',
-        repo: 'repo'
-      })
+                                                                                                  owner: 'acme/subgroup',
+                                                                                                  repo: 'repo'
+                                                                                                })
     end
   end
 end
