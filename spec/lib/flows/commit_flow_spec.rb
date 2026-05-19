@@ -28,7 +28,7 @@ RSpec.describe Commiti::Flows::CommitFlow do
 
     allow(Commiti::FlowContextBuilder).to receive(:build).and_return(single_context)
     allow(flow).to receive(:finalize).and_return(:committed)
-    expect(Commiti::GitWriter).not_to receive(:unstage_all)
+    expect(Commiti::GitWriter).not_to receive(:unstage_all!)
 
     flow.run
 
@@ -54,17 +54,17 @@ RSpec.describe Commiti::Flows::CommitFlow do
     }
 
     allow(Commiti::FlowContextBuilder).to receive(:build).and_return(initial_context, per_group_context, per_group_context)
-    allow(Commiti::GitWriter).to receive(:unstage_all).and_return(true)
-    allow(Commiti::GitWriter).to receive(:stage_files).and_return(true)
+    allow(Commiti::GitWriter).to receive(:unstage_all!).and_return(true)
+    allow(Commiti::GitWriter).to receive(:stage_files!).and_return(true)
     allow(Commiti::GitWriter).to receive(:staged_changes?).and_return(true)
-    allow(Commiti::GitWriter).to receive(:stage_all).and_return(true)
+    allow(Commiti::GitWriter).to receive(:stage_all!).and_return(true)
     allow(flow).to receive(:finalize).and_return(:committed, :skipped)
 
     flow.run
 
-    expect(Commiti::GitWriter).to have_received(:unstage_all).once
-    expect(Commiti::GitWriter).to have_received(:stage_files).with(['lib/a.rb']).once
-    expect(Commiti::GitWriter).to have_received(:stage_files).with(['lib/b.rb']).once
-    expect(Commiti::GitWriter).to have_received(:stage_all).once
+    expect(Commiti::GitWriter).to have_received(:unstage_all!).once
+    expect(Commiti::GitWriter).to have_received(:stage_files!).with(['lib/a.rb']).once
+    expect(Commiti::GitWriter).to have_received(:stage_files!).with(['lib/b.rb']).once
+    expect(Commiti::GitWriter).to have_received(:stage_all!).once
   end
 end

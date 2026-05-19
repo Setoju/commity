@@ -36,76 +36,82 @@ module Commiti
         diff = collect_diff
         client = Commiti::GoogleClient.new(config: options)
         selected_model = options[:model]
+        context = build_context(diff:, client:, model: selected_model)
 
-        context = Commiti::FlowContextBuilder.build(
-          flow_type: flow_type,
-          diff: diff,
-          client: client,
-          run_stage: method(:run_stage),
-          model: selected_model
-        )
+        return run_single_group_context(context:, client:, model: selected_model) if single_group?(context)
 
+        run_grouped_context(context:, client:, model: selected_model)
+      rescue StandardError
+        run_stage('Restaging uncommitted changes after failure') { Commiti::GitWriter.stage_all! }
+        raise
+      end
+
+      def single_group?(context)
+        context[:change_groups].length <= 1
+      end
+
+      def run_single_group_context(context:, client:, model:)
+        puts "\nAuto-split found a single connected change group. Falling back to single commit flow."
+        Commiti::MessagePresenter.print_summarization_notice(context[:summarized_result])
+
+        message = generate_message_for_context(context:, client:, model:)
+        maybe_copy_to_clipboard(message)
+        finalize(message)
+      end
+
+      def run_grouped_context(context:, client:, model:)
         groups = context[:change_groups]
-        if groups.length <= 1
-          puts "\nAuto-split found a single connected change group. Falling back to single commit flow."
-          Commiti::MessagePresenter.print_summarization_notice(context[:summarized_result])
-
-          candidates = generate_candidates(
-            client: client,
-            prompt: context[:prompt],
-            diff_metadata: context[:diff_metadata],
-            model: selected_model
-          )
-          message = select_message(candidates)
-
-          maybe_copy_to_clipboard(message)
-          finalize(message)
-          return
-        end
-
-        run_stage('Unstaging current index for grouped commit execution') { Commiti::GitWriter.unstage_all }
+        run_stage('Unstaging current index for grouped commit execution') { Commiti::GitWriter.unstage_all! }
 
         puts "\nAuto-split detected #{groups.length} connected change groups."
 
         groups.each_with_index do |group, index|
-          run_stage("Staging files for group #{index + 1}/#{groups.length}") { Commiti::GitWriter.stage_files(group[:files]) }
-
-          next unless run_stage('Checking staged changes') { Commiti::GitWriter.staged_changes? }
-
-          puts "\nGroup #{index + 1}/#{groups.length} files:"
-          group[:files].each { |path| puts "- #{path}" }
-
-          group_diff = group[:chunks].map { |chunk| chunk[:lines].join }.join
-          group_context = Commiti::FlowContextBuilder.build(
-            flow_type: flow_type,
-            diff: group_diff,
-            client: client,
-            run_stage: method(:run_stage),
-            model: selected_model
-          )
-
-          Commiti::MessagePresenter.print_summarization_notice(group_context[:summarized_result])
-
-          candidates = generate_candidates(
-            client: client,
-            prompt: group_context[:prompt],
-            diff_metadata: group_context[:diff_metadata],
-            model: selected_model
-          )
-          message = select_message(candidates)
-
-          maybe_copy_to_clipboard(message)
-          result = finalize(message)
-
-          if result != :committed
-            puts "Stopping auto-split flow at group #{index + 1} because commit was skipped."
-            run_stage('Restaging remaining uncommitted changes') { Commiti::GitWriter.stage_all }
-            return
-          end
+          break if process_group(group:, index:, total: groups.length, client:, model:) == :stop
         end
-      rescue StandardError
-        run_stage('Restaging uncommitted changes after failure') { Commiti::GitWriter.stage_all }
-        raise
+      end
+
+      def process_group(group:, index:, total:, client:, model:)
+        run_stage("Staging files for group #{index + 1}/#{total}") { Commiti::GitWriter.stage_files!(group[:files]) }
+        return :continue unless run_stage('Checking staged changes') { Commiti::GitWriter.staged_changes? }
+
+        puts "\nGroup #{index + 1}/#{total} files:"
+        group[:files].each { |path| puts "- #{path}" }
+
+        group_context = build_context(diff: group_diff(group), client:, model:)
+        Commiti::MessagePresenter.print_summarization_notice(group_context[:summarized_result])
+
+        message = generate_message_for_context(context: group_context, client:, model:)
+        maybe_copy_to_clipboard(message)
+        return :continue if finalize(message) == :committed
+
+        puts "Stopping auto-split flow at group #{index + 1} because commit was skipped."
+        run_stage('Restaging remaining uncommitted changes') { Commiti::GitWriter.stage_all! }
+        :stop
+      end
+
+      def build_context(diff:, client:, model:)
+        Commiti::FlowContextBuilder.build(
+          flow_type: flow_type,
+          diff: diff,
+          client: client,
+          run_stage: method(:run_stage),
+          model: model
+        )
+      end
+
+      def generate_message_for_context(context:, client:, model:)
+        candidates = generate_candidates(
+          client: client,
+          prompt: context[:prompt],
+          diff_metadata: context[:diff_metadata],
+          model: model
+        )
+
+        select_message(candidates)
+      end
+
+      def group_diff(group)
+        group[:chunks].map { |chunk| chunk[:lines].join }.join
       end
     end
   end

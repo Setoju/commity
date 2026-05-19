@@ -19,28 +19,28 @@ module Commiti
       !out.strip.empty?
     end
 
-    def self.stage_all
+    def self.stage_all!
       out, err, status = Open3.capture3('git', 'add', '-A')
       raise "git add failed: #{err.strip.empty? ? out.strip : err.strip}" unless status.success?
 
-      true
+      out
     end
 
-    def self.unstage_all
+    def self.unstage_all!
       out, err, status = Open3.capture3('git', 'reset')
       raise "git reset failed: #{err.strip.empty? ? out.strip : err.strip}" unless status.success?
 
-      true
+      out
     end
 
-    def self.stage_files(paths)
+    def self.stage_files!(paths)
       normalized = Array(paths).map(&:to_s).map(&:strip).reject(&:empty?).uniq
-      return true if normalized.empty?
+      return '' if normalized.empty?
 
       out, err, status = Open3.capture3('git', 'add', '--', *normalized)
       raise "git add failed: #{err.strip.empty? ? out.strip : err.strip}" unless status.success?
 
-      true
+      out
     end
 
     def self.commit_with_message_file(message)

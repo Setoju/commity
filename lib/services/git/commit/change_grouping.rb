@@ -73,8 +73,7 @@ module Commiti
       normalized = path.to_s
       normalized = normalized.sub(%r{\A(?:lib|spec|test|app|src)/}, '') while normalized.match?(%r{\A(?:lib|spec|test|app|src)/})
       normalized = normalized.sub(/_spec\.[^.]+\z/, '')
-      normalized = normalized.sub(/\.[^.]+\z/, '')
-      normalized
+      normalized.sub(/\.[^.]+\z/, '')
     end
     private_class_method :logical_stem
 
