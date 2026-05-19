@@ -6,7 +6,8 @@ require 'dotenv/load'
 require 'commiti'
 
 options = {
-  type: :commit
+  type: :commit,
+  auto_split: false
 }
 
 OptionParser.new do |opts|
@@ -33,6 +34,10 @@ OptionParser.new do |opts|
     raise OptionParser::InvalidArgument, 'candidates must be between 1 and 5' unless n.between?(1, 5)
 
     options[:candidates] = n
+  end
+
+  opts.on('--auto-split', 'Auto-group staged changes into multiple connected commits (commit flow only)') do
+    options[:auto_split] = true
   end
 
   opts.on('-h', '--help', 'Show this help') do

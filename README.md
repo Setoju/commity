@@ -51,6 +51,7 @@ GOOGLE_API_KEY=your_google_ai_key
 # COMMITI_CANDIDATES=1
 # COMMITI_BASE_BRANCH=main
 # COMMITI_NO_COPY=false
+# COMMITI_AUTO_SPLIT=false
 ```
 
 `GEMINI_API_KEY` is also accepted as an alias for `GOOGLE_API_KEY`.
@@ -67,9 +68,13 @@ Never commit `.env` to git.
 - `--base BRANCH` base branch for PR diff (default: `main`)
 - `--no-copy` print output only, skip clipboard copy
 - `--candidates N` generate `N` output candidates (`1`-`5`, default: `1`)
+- `--auto-split` auto-group staged changes into multiple connected commits (commit flow only)
 - `-h`, `--help` show help
 
 ## Commit Flow (`--type commit`)
+
+By default, Commiti creates a single commit from staged changes.
+Use `--auto-split` to let Commiti group connected file changes into multiple atomic commits.
 
 1. Shows `git status --short`.
 2. Asks for confirmation before staging (`git add -A`).

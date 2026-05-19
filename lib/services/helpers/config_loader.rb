@@ -8,6 +8,7 @@ module Commiti
       candidates: 1,
       base_branch: 'main',
       no_copy: false,
+      auto_split: false,
       temperature: Commiti::GoogleClient::DEFAULT_TEMPERATURE,
       timeout_seconds: Commiti::GoogleClient::DEFAULT_TIMEOUT_SECONDS,
       open_timeout_seconds: Commiti::GoogleClient::DEFAULT_OPEN_TIMEOUT_SECONDS
@@ -22,6 +23,7 @@ module Commiti
         candidates: integer_or_default(env.fetch('COMMITI_CANDIDATES', nil), DEFAULT_CONFIG[:candidates]),
         base_branch: present_or_default(env.fetch('COMMITI_BASE_BRANCH', nil), DEFAULT_CONFIG[:base_branch]),
         no_copy: boolean_or_default(env.fetch('COMMITI_NO_COPY', nil), DEFAULT_CONFIG[:no_copy]),
+        auto_split: boolean_or_default(env.fetch('COMMITI_AUTO_SPLIT', nil), DEFAULT_CONFIG[:auto_split]),
         temperature: float_or_default(env.fetch('COMMITI_MODEL_TEMPERATURE', nil), DEFAULT_CONFIG[:temperature]),
         timeout_seconds: integer_or_default(env.fetch('COMMITI_MODEL_TIMEOUT_SECONDS', nil), DEFAULT_CONFIG[:timeout_seconds]),
         open_timeout_seconds: integer_or_default(env.fetch('COMMITI_MODEL_OPEN_TIMEOUT_SECONDS', nil),

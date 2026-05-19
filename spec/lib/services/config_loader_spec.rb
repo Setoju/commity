@@ -14,6 +14,7 @@ RSpec.describe Commiti::ConfigLoader do
       expect(config[:candidates]).to eq(1)
       expect(config[:base_branch]).to eq('main')
       expect(config[:no_copy]).to be(false)
+      expect(config[:auto_split]).to be(false)
       expect(config[:temperature]).to eq(0.2)
       expect(config[:timeout_seconds]).to eq(180)
       expect(config[:open_timeout_seconds]).to eq(10)
@@ -26,6 +27,7 @@ RSpec.describe Commiti::ConfigLoader do
         'COMMITI_CANDIDATES' => '3',
         'COMMITI_BASE_BRANCH' => 'develop',
         'COMMITI_NO_COPY' => 'true',
+        'COMMITI_AUTO_SPLIT' => 'true',
         'COMMITI_MODEL_TEMPERATURE' => '0.5',
         'COMMITI_MODEL_TIMEOUT_SECONDS' => '240',
         'COMMITI_MODEL_OPEN_TIMEOUT_SECONDS' => '20'
@@ -38,6 +40,7 @@ RSpec.describe Commiti::ConfigLoader do
       expect(config[:candidates]).to eq(3)
       expect(config[:base_branch]).to eq('develop')
       expect(config[:no_copy]).to be(true)
+      expect(config[:auto_split]).to be(true)
       expect(config[:temperature]).to eq(0.5)
       expect(config[:timeout_seconds]).to eq(240)
       expect(config[:open_timeout_seconds]).to eq(20)
@@ -55,6 +58,7 @@ RSpec.describe Commiti::ConfigLoader do
       env.merge!(
         'COMMITI_CANDIDATES' => 'abc',
         'COMMITI_NO_COPY' => 'wat',
+        'COMMITI_AUTO_SPLIT' => 'not-a-bool',
         'COMMITI_MODEL_TEMPERATURE' => 'nan-nope',
         'COMMITI_MODEL_TIMEOUT_SECONDS' => 'oops',
         'COMMITI_MODEL_OPEN_TIMEOUT_SECONDS' => 'oops'
@@ -64,6 +68,7 @@ RSpec.describe Commiti::ConfigLoader do
 
       expect(config[:candidates]).to eq(1)
       expect(config[:no_copy]).to be(false)
+      expect(config[:auto_split]).to be(false)
       expect(config[:temperature]).to eq(0.2)
       expect(config[:timeout_seconds]).to eq(180)
       expect(config[:open_timeout_seconds]).to eq(10)
