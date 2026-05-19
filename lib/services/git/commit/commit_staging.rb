@@ -14,7 +14,7 @@ module Commiti
       puts "\nCurrent git status:\n\n#{status}"
       return unless Commiti::InteractivePrompt.ask_yes_no('Run git add -A now?', default: :no)
 
-      run_stage.call('Staging changes (git add -A)') { Commiti::GitWriter.stage_all }
+      run_stage.call('Staging changes (git add -A)') { Commiti::GitWriter.stage_all! }
       puts "\nStaged changes with git add -A.\n"
     end
     private_class_method :maybe_stage_changes
@@ -25,7 +25,7 @@ module Commiti
 
       if Commiti::InteractivePrompt.ask_yes_no('No staged changes found. Stage all changes now with git add -A?',
                                                default: :yes)
-        run_stage.call('Staging changes (git add -A)') { Commiti::GitWriter.stage_all }
+        run_stage.call('Staging changes (git add -A)') { Commiti::GitWriter.stage_all! }
         puts "\nStaged changes with git add -A.\n"
       end
 

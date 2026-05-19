@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = 'commiti'
-  spec.version = '1.2.3'
+  spec.version = '1.3.0'
   spec.authors = ['Setoju']
   spec.email = ['setoju48@gmail.com']
   spec.summary = 'AI-powered commit and PR description generator using Google AI models'
