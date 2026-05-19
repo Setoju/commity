@@ -51,7 +51,8 @@ module Commiti
       end
 
       def run_single_group_context(context:, client:, model:)
-        puts "\n#{Commiti::TerminalUI.status(:info, 'Auto-split found a single connected change group. Falling back to single commit flow.')}"
+        message = 'Auto-split found a single connected change group. Falling back to single commit flow.'
+        puts "\n#{Commiti::TerminalUI.status(:info, message)}"
         Commiti::MessagePresenter.print_summarization_notice(context[:summarized_result])
 
         message = generate_message_for_context(context:, client:, model:)
@@ -84,7 +85,8 @@ module Commiti
         maybe_copy_to_clipboard(message)
         return :continue if finalize(message) == :committed
 
-        puts "#{Commiti::TerminalUI.status(:warn, "Stopping auto-split flow at group #{index + 1} because commit was skipped.")}"
+        stop_message = "Stopping auto-split flow at group #{index + 1} because commit was skipped."
+        puts Commiti::TerminalUI.status(:warn, stop_message)
         run_stage('Restaging remaining uncommitted changes') { Commiti::GitWriter.stage_all! }
         :stop
       end
